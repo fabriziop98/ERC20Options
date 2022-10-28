@@ -4,6 +4,7 @@
 import type {
   BaseContract,
   BigNumber,
+  BigNumberish,
   BytesLike,
   CallOverrides,
   ContractTransaction,
@@ -28,15 +29,39 @@ import type {
 
 export interface OptionTriggerInterface extends utils.Interface {
   functions: {
+    "createOption(uint256,uint256,uint256,uint256,address,address)": FunctionFragment;
+    "options(uint256)": FunctionFragment;
     "owner()": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
+    "users(address,uint256)": FunctionFragment;
   };
 
   getFunction(
-    nameOrSignatureOrTopic: "owner" | "renounceOwnership" | "transferOwnership"
+    nameOrSignatureOrTopic:
+      | "createOption"
+      | "options"
+      | "owner"
+      | "renounceOwnership"
+      | "transferOwnership"
+      | "users"
   ): FunctionFragment;
 
+  encodeFunctionData(
+    functionFragment: "createOption",
+    values: [
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "options",
+    values: [PromiseOrValue<BigNumberish>]
+  ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -46,7 +71,16 @@ export interface OptionTriggerInterface extends utils.Interface {
     functionFragment: "transferOwnership",
     values: [PromiseOrValue<string>]
   ): string;
+  encodeFunctionData(
+    functionFragment: "users",
+    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+  ): string;
 
+  decodeFunctionResult(
+    functionFragment: "createOption",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "options", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "renounceOwnership",
@@ -56,13 +90,39 @@ export interface OptionTriggerInterface extends utils.Interface {
     functionFragment: "transferOwnership",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "users", data: BytesLike): Result;
 
   events: {
+    "OptionCreated(address,address)": EventFragment;
+    "OptionExecuted(address)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
   };
 
+  getEvent(nameOrSignatureOrTopic: "OptionCreated"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "OptionExecuted"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
 }
+
+export interface OptionCreatedEventObject {
+  optionId: string;
+  holder: string;
+}
+export type OptionCreatedEvent = TypedEvent<
+  [string, string],
+  OptionCreatedEventObject
+>;
+
+export type OptionCreatedEventFilter = TypedEventFilter<OptionCreatedEvent>;
+
+export interface OptionExecutedEventObject {
+  optionId: string;
+}
+export type OptionExecutedEvent = TypedEvent<
+  [string],
+  OptionExecutedEventObject
+>;
+
+export type OptionExecutedEventFilter = TypedEventFilter<OptionExecutedEvent>;
 
 export interface OwnershipTransferredEventObject {
   previousOwner: string;
@@ -103,6 +163,43 @@ export interface OptionTrigger extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    createOption(
+      strike: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
+      premium: PromiseOrValue<BigNumberish>,
+      period: PromiseOrValue<BigNumberish>,
+      paymentToken: PromiseOrValue<string>,
+      optionToken: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    options(
+      arg0: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<
+      [
+        number,
+        string,
+        string,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        string,
+        string
+      ] & {
+        state: number;
+        seller: string;
+        buyer: string;
+        strike: BigNumber;
+        amount: BigNumber;
+        premium: BigNumber;
+        expiration: BigNumber;
+        paymentToken: string;
+        optionToken: string;
+      }
+    >;
+
     owner(overrides?: CallOverrides): Promise<[string]>;
 
     renounceOwnership(
@@ -113,7 +210,50 @@ export interface OptionTrigger extends BaseContract {
       newOwner: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    users(
+      arg0: PromiseOrValue<string>,
+      arg1: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
   };
+
+  createOption(
+    strike: PromiseOrValue<BigNumberish>,
+    amount: PromiseOrValue<BigNumberish>,
+    premium: PromiseOrValue<BigNumberish>,
+    period: PromiseOrValue<BigNumberish>,
+    paymentToken: PromiseOrValue<string>,
+    optionToken: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  options(
+    arg0: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<
+    [
+      number,
+      string,
+      string,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      string,
+      string
+    ] & {
+      state: number;
+      seller: string;
+      buyer: string;
+      strike: BigNumber;
+      amount: BigNumber;
+      premium: BigNumber;
+      expiration: BigNumber;
+      paymentToken: string;
+      optionToken: string;
+    }
+  >;
 
   owner(overrides?: CallOverrides): Promise<string>;
 
@@ -126,7 +266,50 @@ export interface OptionTrigger extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  users(
+    arg0: PromiseOrValue<string>,
+    arg1: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
   callStatic: {
+    createOption(
+      strike: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
+      premium: PromiseOrValue<BigNumberish>,
+      period: PromiseOrValue<BigNumberish>,
+      paymentToken: PromiseOrValue<string>,
+      optionToken: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    options(
+      arg0: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<
+      [
+        number,
+        string,
+        string,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        string,
+        string
+      ] & {
+        state: number;
+        seller: string;
+        buyer: string;
+        strike: BigNumber;
+        amount: BigNumber;
+        premium: BigNumber;
+        expiration: BigNumber;
+        paymentToken: string;
+        optionToken: string;
+      }
+    >;
+
     owner(overrides?: CallOverrides): Promise<string>;
 
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
@@ -135,9 +318,31 @@ export interface OptionTrigger extends BaseContract {
       newOwner: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    users(
+      arg0: PromiseOrValue<string>,
+      arg1: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
   };
 
   filters: {
+    "OptionCreated(address,address)"(
+      optionId?: PromiseOrValue<string> | null,
+      holder?: null
+    ): OptionCreatedEventFilter;
+    OptionCreated(
+      optionId?: PromiseOrValue<string> | null,
+      holder?: null
+    ): OptionCreatedEventFilter;
+
+    "OptionExecuted(address)"(
+      optionId?: PromiseOrValue<string> | null
+    ): OptionExecutedEventFilter;
+    OptionExecuted(
+      optionId?: PromiseOrValue<string> | null
+    ): OptionExecutedEventFilter;
+
     "OwnershipTransferred(address,address)"(
       previousOwner?: PromiseOrValue<string> | null,
       newOwner?: PromiseOrValue<string> | null
@@ -149,6 +354,21 @@ export interface OptionTrigger extends BaseContract {
   };
 
   estimateGas: {
+    createOption(
+      strike: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
+      premium: PromiseOrValue<BigNumberish>,
+      period: PromiseOrValue<BigNumberish>,
+      paymentToken: PromiseOrValue<string>,
+      optionToken: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    options(
+      arg0: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
     renounceOwnership(
@@ -159,9 +379,30 @@ export interface OptionTrigger extends BaseContract {
       newOwner: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
+
+    users(
+      arg0: PromiseOrValue<string>,
+      arg1: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
+    createOption(
+      strike: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
+      premium: PromiseOrValue<BigNumberish>,
+      period: PromiseOrValue<BigNumberish>,
+      paymentToken: PromiseOrValue<string>,
+      optionToken: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    options(
+      arg0: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     renounceOwnership(
@@ -171,6 +412,12 @@ export interface OptionTrigger extends BaseContract {
     transferOwnership(
       newOwner: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    users(
+      arg0: PromiseOrValue<string>,
+      arg1: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
   };
 }

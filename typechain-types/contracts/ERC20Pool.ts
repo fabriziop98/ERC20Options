@@ -34,6 +34,7 @@ export interface ERC20PoolInterface extends utils.Interface {
     "lock(address,uint256)": FunctionFragment;
     "lockedErc20Balance(address)": FunctionFragment;
     "owner()": FunctionFragment;
+    "receiveFee(address,uint256)": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "setOptionTrigger(address)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
@@ -49,6 +50,7 @@ export interface ERC20PoolInterface extends utils.Interface {
       | "lock"
       | "lockedErc20Balance"
       | "owner"
+      | "receiveFee"
       | "renounceOwnership"
       | "setOptionTrigger"
       | "transferOwnership"
@@ -74,6 +76,10 @@ export interface ERC20PoolInterface extends utils.Interface {
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "receiveFee",
+    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+  ): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
     values?: undefined
@@ -117,6 +123,7 @@ export interface ERC20PoolInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "receiveFee", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "renounceOwnership",
     data: BytesLike
@@ -247,6 +254,12 @@ export interface ERC20Pool extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
+    receiveFee(
+      _erc20Address: PromiseOrValue<string>,
+      _amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     renounceOwnership(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -263,7 +276,7 @@ export interface ERC20Pool extends BaseContract {
 
     transferTo(
       _erc20Address: PromiseOrValue<string>,
-      _beneficiary: PromiseOrValue<string>,
+      _buyer: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -303,6 +316,12 @@ export interface ERC20Pool extends BaseContract {
 
   owner(overrides?: CallOverrides): Promise<string>;
 
+  receiveFee(
+    _erc20Address: PromiseOrValue<string>,
+    _amount: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   renounceOwnership(
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -319,7 +338,7 @@ export interface ERC20Pool extends BaseContract {
 
   transferTo(
     _erc20Address: PromiseOrValue<string>,
-    _beneficiary: PromiseOrValue<string>,
+    _buyer: PromiseOrValue<string>,
     _amount: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -359,6 +378,12 @@ export interface ERC20Pool extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<string>;
 
+    receiveFee(
+      _erc20Address: PromiseOrValue<string>,
+      _amount: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
 
     setOptionTrigger(
@@ -373,7 +398,7 @@ export interface ERC20Pool extends BaseContract {
 
     transferTo(
       _erc20Address: PromiseOrValue<string>,
-      _beneficiary: PromiseOrValue<string>,
+      _buyer: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
@@ -453,6 +478,12 @@ export interface ERC20Pool extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
+    receiveFee(
+      _erc20Address: PromiseOrValue<string>,
+      _amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     renounceOwnership(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -469,7 +500,7 @@ export interface ERC20Pool extends BaseContract {
 
     transferTo(
       _erc20Address: PromiseOrValue<string>,
-      _beneficiary: PromiseOrValue<string>,
+      _buyer: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -510,6 +541,12 @@ export interface ERC20Pool extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    receiveFee(
+      _erc20Address: PromiseOrValue<string>,
+      _amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     renounceOwnership(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
@@ -526,7 +563,7 @@ export interface ERC20Pool extends BaseContract {
 
     transferTo(
       _erc20Address: PromiseOrValue<string>,
-      _beneficiary: PromiseOrValue<string>,
+      _buyer: PromiseOrValue<string>,
       _amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;

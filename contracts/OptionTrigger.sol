@@ -17,8 +17,8 @@ contract OptionTrigger is Ownable {
     }
     struct Option {
         State state;
-        address creator;
-        address beneficiary;
+        address seller;
+        address buyer;
         uint256 strike;
         uint256 amount;
         uint256 premium;
@@ -29,6 +29,7 @@ contract OptionTrigger is Ownable {
     }
     Option[] public options;
     ERC20Pool private erc20Pool;
+    mapping(address => uint[]) public users;
 
     // Events
     event OptionCreated(address indexed optionId, address holder);
@@ -40,11 +41,18 @@ contract OptionTrigger is Ownable {
         _;
     }
 
+     /**
+     * @notice initializes the contract with te address of the pool.
+     */
     constructor(address _erc20Pool) {
         erc20Pool = ERC20Pool(_erc20Pool);
     }
 
-    // Create option
+     /**
+     * @notice Seller create the call option 
+     * @dev approve() should be called before invoking this function OR a permitSignature can be passed in 
+     *
+     */
     function createOption(
         uint256 strike,
         uint256 amount,
@@ -60,6 +68,11 @@ contract OptionTrigger is Ownable {
         require(amount > 0, "Amount is too small");
         require(period >= 1 days, "Period is too short");
         require(period <= 4 weeks, "Period is too long");
+        // Validate ERC20 amount and transfer it
+        bool transfered = IERC20(optionToken).transferFrom(msg.sender, address(erc20Pool), amount);
+        require(transfered, "Transfer not posible");
+        // Lock funds in erc20Pool
+        erc20Pool.lock(optionToken, amount);
 
         // Create new Option 
         optionID = options.length;
@@ -79,12 +92,9 @@ contract OptionTrigger is Ownable {
 
         //TODO: calculate fees and substract it from amount
 
-        // Validate ERC20 amount and transfer it
-        bool transfered = IERC20(optionToken).transferFrom(msg.sender, address(erc20Pool), amount);
-        require(transfered, "Transfer not posible");
+       
 
-        // Lock funds in erc20Pool
-        erc20Pool.lock(optionToken, amount);
+      
     }
 
 

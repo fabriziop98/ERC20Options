@@ -83,8 +83,8 @@ contract ERC20Pool is Ownable {
         emit UnlockedAmount(_erc20Address, _amount, unlockedErc20Balance[IERC20(_erc20Address)]);
     }
 
-    // @notice transferTo only to send valid ERC20 tokens to beneficiary
-    function transferTo(address _erc20Address, address _beneficiary, uint256 _amount) 
+    // @notice transferTo only to send valid ERC20 tokens to buyer
+    function transferTo(address _erc20Address, address _buyer, uint256 _amount) 
         onlyOptionContract(msg.sender)
         validAddress(_erc20Address)
         reentrancyGuard
@@ -93,7 +93,7 @@ contract ERC20Pool is Ownable {
         require(unlockedErc20Balance[IERC20(_erc20Address)] >= _amount, 'Not enough unlocked tokens');
         unlockedErc20Balance[IERC20(_erc20Address)] -= _amount;
         
-        bool success = IERC20(_erc20Address).transferFrom(address(this), _beneficiary, _amount);
+        bool success = IERC20(_erc20Address).transferFrom(address(this), _buyer, _amount);
         require(success, 'Transfer failed');
 
         emit TransferedAmount(_erc20Address, _amount);
