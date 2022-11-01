@@ -90,7 +90,7 @@ contract OptionTrigger is Ownable {
         uint256 optionID,
         address paymentToken,
         uint256 amount
-    ) external virtual returns (uint256) {}
+    ) external virtual {}
 
     /**
      * @notice Seller create the option, in the type specified if is put or call option.

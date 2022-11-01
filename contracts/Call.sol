@@ -78,7 +78,7 @@ contract Call is OptionTrigger {
 
         buyerOptions[msg.sender].push(optionID);
 
-        erc20Pool.transferPremium(
+        erc20Pool.transferErc20(
             paymentToken,
             _option.buyer,
             _option.seller,
@@ -92,7 +92,7 @@ contract Call is OptionTrigger {
         uint256 optionID,
         address paymentToken,
         uint256 amount
-    ) public virtual override returns (uint256) {
+    ) public virtual override {
         Option memory _option = options[optionID];
 
         require(_option.buyer == msg.sender, "You don't buy the option");
@@ -105,10 +105,16 @@ contract Call is OptionTrigger {
         require(amount == _option.strike, "Amount is not valid");
 
         _option.state = State.Exercised;
-    
 
-
-        return 1;
+        erc20Pool.excerciseErc20(
+            _option.buyer,
+            _option.seller,
+            paymentToken,
+            amount,
+            _option.optionToken,
+            _option.amount
+        );
+        emit OptionExecuted(optionID);
     }
 
     function calculateFee() public {}

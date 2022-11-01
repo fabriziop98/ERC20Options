@@ -72,7 +72,7 @@ contract ERC20Pool is Ownable {
 
     // @notice unlock for preparing tokens to be transfered for when an option has been executed or terminated
     function unlock(uint256 _amount, address _erc20Address)
-        external
+        private
         onlyOptionContract(msg.sender)
         validAddress(_erc20Address)
         validAmount(_amount)
@@ -112,16 +112,23 @@ contract ERC20Pool is Ownable {
         lock(_token, _amount);
     }
 
-    function excerciseErc20( 
+    function excerciseErc20(
         address _buyer,
         address _seller,
         address _paymentToken,
-        address optionToken,
-        uint256 _amount) external{
+        uint256 _amountPayment,
+        address _optionToken,
+        uint256 _amountOption
+    ) external onlyOptionContract(msg.sender) {
 
+        //transfer from buyer to seller
+        transferErc20(_paymentToken,_buyer,_seller,_amountPayment);
+        //unlock money from pool
+        unlock(_amountOption, _optionToken);
+        //transfer pool to buyer
+        transferTo(_optionToken,_buyer,_amountOption);
+      
     }
-
-
 
     // @notice transferTo only to send valid ERC20 tokens to buyer
     function transferTo(
@@ -160,21 +167,6 @@ contract ERC20Pool is Ownable {
     }
 
 
-    function transferPremium(address _paymentToken, address _buyer, address _seller, uint _amount)
-        onlyOptionContract(msg.sender)
-        validAddress(_paymentToken)
-        validAmount(_amount)
-      external {
-        bool transfered = IERC20(_paymentToken).transferFrom(
-            _buyer,
-            address(_seller),
-            _amount
-        );
-        require(transfered, "Transfer not posible");
-    
-    }
-     
-
     function getUnLockedAmount(address _erc20Address)
         external
         view
@@ -182,5 +174,22 @@ contract ERC20Pool is Ownable {
         returns (uint256)
     {
         return unlockedErc20Balance[IERC20(_erc20Address)];
+    }
+
+    function transferErc20(
+        address _token,
+        address _sender,
+        address _receiver,
+        uint _amount
+    )  public
+        onlyOptionContract(msg.sender)
+        validAddress(_token)
+        validAmount(_amount) {
+        bool transfered = IERC20(_token).transferFrom(
+            _sender,
+            _receiver,
+            _amount
+        );
+        require(transfered, "Transfer not posible");
     }
 }
