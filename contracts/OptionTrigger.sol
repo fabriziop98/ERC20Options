@@ -8,14 +8,14 @@ import "../interfaces/IERC20.sol";
 contract OptionTrigger is Ownable {
     enum State {
         New,
-        Active,
+        Locked,
         Exercised,
         Expired,
         Cancel
     }
     enum OptionType {
-        Put,
-        Call
+        Call,
+        Put
     }
     struct Option {
         State state;
@@ -31,44 +31,73 @@ contract OptionTrigger is Ownable {
         //at any time before and including the expiration date.
         uint256 expiration;
         //Know if is a Put or Call option
-        OptionType typeOpt;
+        //OptionType typeOpt;
         //ERC20
         address paymentToken;
         address optionToken;
     }
+    bool internal locked;
+
     Option[] public options;
-    ERC20Pool private erc20Pool;
-    
     mapping(address => uint[]) public sellerOptions;
     mapping(address => uint[]) public buyerOptions;
 
-
     // Events
-    event OptionCreated(address indexed optionId, address holder);
-    event OptionExecuted(address indexed optionId);
+    event OptionCreated(
+        uint256 indexed optionId,
+        address seller,
+        OptionType optionType
+    );
+    event OptionLocked(uint256 indexed optionId, address buyer);
+    event OptionExecuted(uint256 indexed optionId);
 
     // Modifiers
     modifier validAddress(address _address) {
         require(_address != address(0), "Zero address");
         _;
     }
-
-     /**
-     * @notice initializes the contract with the address of the pool.
-     */
-    constructor(address _erc20Pool) {
-        erc20Pool = ERC20Pool(_erc20Pool);
+    modifier reentrancyGuard() {
+        require(!locked);
+        locked = true;
+        _;
+        locked = false;
     }
 
+    /**
+     * @notice initializes the contract with the address of the pool.
+     */
+    constructor() /* address _erc20Pool */
+    {
+        //erc20Pool = ERC20Pool(_erc20Pool);
+    }
 
- 
+    function sellOption(
+        uint256 strike,
+        uint256 amount,
+        uint256 premium,
+        uint256 period,
+        address paymentToken,
+        address optionToken
+    ) external virtual returns (uint256) {}
 
-     /**
-     * @notice Seller create the option, in the type specified if is put or call option. 
-     * @dev approve() should be called before invoking this function OR a permitSignature can be passed in 
+    function buyOption(
+        uint256 optionID,
+        address paymentToken,
+        uint256 premium
+    ) external virtual {}
+
+    function excerciseOption(
+        uint256 optionID,
+        address paymentToken,
+        uint256 amount
+    ) external virtual returns (uint256) {}
+
+    /**
+     * @notice Seller create the option, in the type specified if is put or call option.
+     * @dev approve() should be called before invoking this function OR a permitSignature can be passed in
      *
      */
-    function createOption(
+    /*  function createOption(
         uint256 strike,
         uint256 amount,
         uint256 premium,
@@ -111,11 +140,10 @@ contract OptionTrigger is Ownable {
        
 
       
-    }
-
+    } */
 
     // Transfer optionToken to lock funds in ERC20Pool
-    function transferOptionToken(address optionToken, uint256 amount)
+    /*     function transferOptionToken(address optionToken, uint256 amount)
         internal
         validAddress(optionToken)
     {
@@ -126,27 +154,46 @@ contract OptionTrigger is Ownable {
             amount
         );
         require(transfered, "Transfer not posible");
-    }
-     
-     /**
-     * @notice Seller could cancel option only if is in state New. 
+    } */
+
+    /**
+     * @notice Seller could cancel option only if is in state New.
      * Nobody at the moment buy this option.
      * @param _indexOpt - index of the option in array options
      */
 
-    function cancelOption(uint _indexOpt) public{           
-           
-           require(options[_indexOpt].seller == msg.sender, "You are not the owner of the option");
+    function cancelOption(uint _indexOpt) external virtual {
+        /* require(options[_indexOpt].seller == msg.sender, "You are not the owner of the option");
            require(options[_indexOpt].state != State.New, "Cannot cancel the option");
-           options[_indexOpt].state = State.Cancel;           
-           bool transfered = IERC20(options[_indexOpt].optionToken).transferFrom(address(erc20Pool), msg.sender, options[_indexOpt].amount);
-           require(transfered, "Transfer not posible");
-
+           options[_indexOpt].state = State.Cancel;       */
+        /*  bool transfered = IERC20(options[_indexOpt].optionToken).transferFrom(address(erc20Pool), msg.sender, options[_indexOpt].amount);
+           require(transfered, "Transfer not posible"); */
     }
 
+    /**
+     * @notice Seller could cancel option only if is in state New.
+     * Nobody at the moment buy this option.
+     *
+     */
+
+    function getBuyerOptions() public view returns (uint[] memory) {
+        return buyerOptions[msg.sender];
+    }
+
+    function getSellerOptions() public view returns (uint[] memory) {
+        return sellerOptions[msg.sender];
+    }
+
+    function getOption(uint _index) public view returns (Option memory) {
+        return options[_index];
+    }
+
+    function getAllOptions() public view returns (Option[] memory) {
+        return options;
+    }
 
     // Transfer fee
-    function transferFee(uint256 amount) internal {
+    /*   function transferFee(uint256 amount) internal {
         require(amount > 0, "Amount not valid");
-    }
+    } */
 }
