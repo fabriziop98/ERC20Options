@@ -176,12 +176,12 @@ contract OptionTrigger is Ownable {
      *
      */
 
-    function getBuyerOptions() public view returns (uint[] memory) {
-        return buyerOptions[msg.sender];
+    function getBuyerOptions(address _address) public view returns (uint[] memory) {
+        return buyerOptions[_address];
     }
 
-    function getSellerOptions() public view returns (uint[] memory) {
-        return sellerOptions[msg.sender];
+    function getSellerOptions(address _address) public view returns (uint[] memory) {
+        return sellerOptions[_address];
     }
 
     function getOption(uint _index) public view returns (Option memory) {
