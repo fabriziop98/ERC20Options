@@ -3,13 +3,14 @@ pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../interfaces/IERC20.sol";
+import "hardhat/console.sol";
 
 contract ERC20Pool is Ownable {
     bool internal locked;
     mapping(IERC20 => uint256) public lockedErc20Balance;
     mapping(IERC20 => uint256) public unlockedErc20Balance;
 
-    address private optionTrigger;
+    address public optionTrigger;
 
     // Events
     event LockedAmount(address erc20, uint256 amount, uint256 newAmount);
@@ -112,25 +113,46 @@ contract ERC20Pool is Ownable {
         lock(_token, _amount);
     }
 
-    function excerciseErc20(
+    function transferErc20(
+        address _sender,
+        address _token,
+        address _receiver,
+        uint _amount
+        //TODO: shouldn't be internal?
+    )  public
+        onlyOptionContract(msg.sender)
+        validAddress(_token)
+        validAmount(_amount) {
+        bool transfered = IERC20(_token).transferFrom(
+            _sender,
+            _receiver,
+            _amount
+        );
+        require(transfered, "Transfer not posible");
+    }
+
+    function exerciseErc20(
         address _buyer,
         address _seller,
-        address _paymentToken,
-        uint256 _amountPayment,
+        address _primePaymentToken,
+        uint256 _primePaymentAmount,
         address _optionToken,
-        uint256 _amountOption
+        uint256 _optionTokenAmount
     ) external onlyOptionContract(msg.sender) {
 
+        //TODO: _optionTokenAmount can be less than option amount ? 
+
         //transfer from buyer to seller
-        transferErc20(_paymentToken,_buyer,_seller,_amountPayment);
+        transferErc20(_buyer,_primePaymentToken,_seller,_primePaymentAmount);
         //unlock money from pool
-        unlock(_amountOption, _optionToken);
+        unlock(_optionTokenAmount, _optionToken);
         //transfer pool to buyer
-        transferTo(_optionToken,_buyer,_amountOption);
+        transferTo(_optionToken,_buyer,_optionTokenAmount);
       
     }
 
     // @notice transferTo only to send valid ERC20 tokens to buyer
+    // TODO: shouldn't be private ?
     function transferTo(
         address _erc20Address,
         address _buyer,
@@ -147,8 +169,7 @@ contract ERC20Pool is Ownable {
         );
         unlockedErc20Balance[IERC20(_erc20Address)] -= _amount;
 
-        bool success = IERC20(_erc20Address).transferFrom(
-            address(this),
+        bool success = IERC20(_erc20Address).transfer(
             _buyer,
             _amount
         );
@@ -176,20 +197,7 @@ contract ERC20Pool is Ownable {
         return unlockedErc20Balance[IERC20(_erc20Address)];
     }
 
-    function transferErc20(
-        address _token,
-        address _sender,
-        address _receiver,
-        uint _amount
-    )  public
-        onlyOptionContract(msg.sender)
-        validAddress(_token)
-        validAmount(_amount) {
-        bool transfered = IERC20(_token).transferFrom(
-            _sender,
-            _receiver,
-            _amount
-        );
-        require(transfered, "Transfer not posible");
+    function getOptionTrigger() public view returns(address) {
+        return optionTrigger;
     }
 }

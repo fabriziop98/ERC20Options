@@ -3,7 +3,7 @@ pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./ERC20Pool.sol";
-import "../interfaces/IERC20.sol";
+// import "../interfaces/IERC20.sol";
 
 contract OptionTrigger is Ownable {
     enum State {
@@ -21,23 +21,25 @@ contract OptionTrigger is Ownable {
         State state;
         address seller;
         address buyer;
-        //Quantity of paymentToken that holder will be able to swap for optionToken
+        //Payment token amount
         uint256 strike;
-        //Amount of optionToken that it will be swap.
+        //Amount of optionToken that will be offered in the option.
         uint256 amount;
-        //Calculate in payment Token
+        //Calculate in payment Tokens
         uint256 premium;
         //We will use An American option that allows holders to exercise their rights
         //at any time before and including the expiration date.
         uint256 expiration;
         //Know if is a Put or Call option
         //OptionType typeOpt;
-        //ERC20
+        //type of ERC20 that the strike will be
         address paymentToken;
+        //ERC20 that will be offered in the option
         address optionToken;
     }
     bool internal locked;
 
+    ERC20Pool public erc20Pool;
     Option[] public options;
     mapping(address => uint[]) public sellerOptions;
     mapping(address => uint[]) public buyerOptions;
@@ -66,9 +68,9 @@ contract OptionTrigger is Ownable {
     /**
      * @notice initializes the contract with the address of the pool.
      */
-    constructor() /* address _erc20Pool */
+    constructor(address _erc20Pool)
     {
-        //erc20Pool = ERC20Pool(_erc20Pool);
+        erc20Pool = ERC20Pool(_erc20Pool);
     }
 
     function sellOption(
@@ -78,19 +80,100 @@ contract OptionTrigger is Ownable {
         uint256 period,
         address paymentToken,
         address optionToken
-    ) external virtual returns (uint256) {}
+    ) external
+        validAddress(paymentToken)
+        validAddress(optionToken)
+        reentrancyGuard
+        returns (uint256 optionID)
+    {
+        require(strike > 0, "Strike is too small");
+        require(amount > 0, "Amount is too small");
+        require(period >= 1 days, "Period is too short");
+        require(period <= 4 weeks, "Period is too long");
+
+        optionID = options.length;
+        options.push(
+            Option(
+                State.New,
+                msg.sender,
+                address(0),
+                strike,
+                amount,
+                premium,
+                block.timestamp + period,
+                paymentToken,
+                optionToken
+            )
+        );
+        // Add to seller
+        sellerOptions[msg.sender].push(optionID);
+
+        //TODO: calculate fees and substract it from amount
+
+        erc20Pool.transferLockedErc20(msg.sender, optionToken, amount);
+
+        emit OptionCreated(optionID, msg.sender, OptionType.Call);
+    }
 
     function buyOption(
         uint256 optionID,
         address paymentToken,
         uint256 premium
-    ) external virtual {}
+    ) external {
+        Option memory _option = options[optionID];
+
+        // Check for valid option
+        require(State.New == _option.state, "Option not active");
+        require(
+            paymentToken == _option.paymentToken,
+            "Payment token not valid"
+        );
+        require(premium == _option.premium, "Premium amount not valid");
+
+        _option.state = State.Locked;
+        _option.buyer = msg.sender;
+        options[optionID] = _option;
+
+        buyerOptions[msg.sender].push(optionID);
+
+        erc20Pool.transferErc20(
+            paymentToken,
+            _option.buyer,
+            _option.seller,
+            premium
+        );
+
+        emit OptionLocked(optionID, msg.sender);
+    }
 
     function excerciseOption(
         uint256 optionID,
         address paymentToken,
         uint256 amount
-    ) external virtual {}
+    ) public {
+        Option memory _option = options[optionID];
+
+        require(_option.buyer == msg.sender, "You don't buy the option");
+        require(_option.expiration <= block.timestamp, "The option expired"); // Verify
+        require(_option.state == State.Locked, "The option is not locked");
+        require(
+            paymentToken == _option.paymentToken,
+            "Payment token not valid"
+        );
+        require(amount == _option.strike, "Amount is not valid");
+
+        _option.state = State.Exercised;
+
+        erc20Pool.exerciseErc20(
+            _option.buyer,
+            _option.seller,
+            paymentToken,
+            amount,
+            _option.optionToken,
+            _option.amount
+        );
+        emit OptionExecuted(optionID);
+    }
 
     /**
      * @notice Seller create the option, in the type specified if is put or call option.
