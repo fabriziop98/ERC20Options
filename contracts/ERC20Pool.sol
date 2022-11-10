@@ -118,7 +118,6 @@ contract ERC20Pool is Ownable {
         address _token,
         address _receiver,
         uint _amount
-        //TODO: shouldn't be internal?
     )  public
         onlyOptionContract(msg.sender)
         validAddress(_token)

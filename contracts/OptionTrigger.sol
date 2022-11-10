@@ -7,11 +7,11 @@ import "./ERC20Pool.sol";
 
 contract OptionTrigger is Ownable {
     enum State {
-        New,
-        Locked,
-        Exercised,
-        Expired,
-        Cancel
+        New, /* 0 */
+        Locked, /* 1 */
+        Exercised, /* 2 */
+        Expired, /* 3 */
+        Cancel /* 4 */
     }
     enum OptionType {
         Call,
@@ -31,7 +31,7 @@ contract OptionTrigger is Ownable {
         //at any time before and including the expiration date.
         uint256 expiration;
         //Know if is a Put or Call option
-        //OptionType typeOpt;
+        OptionType optionType;
         //type of ERC20 that the strike will be
         address paymentToken;
         //ERC20 that will be offered in the option
@@ -79,7 +79,8 @@ contract OptionTrigger is Ownable {
         uint256 premium,
         uint256 period,
         address paymentToken,
-        address optionToken
+        address optionToken,
+        OptionType optionType // 0 -> Call, 1 -> Put
     ) external
         validAddress(paymentToken)
         validAddress(optionToken)
@@ -101,6 +102,7 @@ contract OptionTrigger is Ownable {
                 amount,
                 premium,
                 block.timestamp + period,
+                optionType,
                 paymentToken,
                 optionToken
             )
@@ -112,7 +114,7 @@ contract OptionTrigger is Ownable {
 
         erc20Pool.transferLockedErc20(msg.sender, optionToken, amount);
 
-        emit OptionCreated(optionID, msg.sender, OptionType.Call);
+        emit OptionCreated(optionID, msg.sender, optionType);
     }
 
     function buyOption(
@@ -137,11 +139,13 @@ contract OptionTrigger is Ownable {
         buyerOptions[msg.sender].push(optionID);
 
         erc20Pool.transferErc20(
-            paymentToken,
-            _option.buyer,
-            _option.seller,
-            premium
+            _option.buyer, //sender
+            paymentToken, //token
+            _option.seller, //reciever
+            premium //amount
         );
+
+         console.log("buyPtion despiues");
 
         emit OptionLocked(optionID, msg.sender);
     }
@@ -153,16 +157,22 @@ contract OptionTrigger is Ownable {
     ) public {
         Option memory _option = options[optionID];
 
+        console.log("block timestamp: ", block.timestamp);
+        console.log("option expiration: ", _option.expiration);
+
         require(_option.buyer == msg.sender, "You don't buy the option");
-        require(_option.expiration <= block.timestamp, "The option expired"); // Verify
+        // The option expiration has to be in the future.
+        require(_option.expiration >= block.timestamp, "The option expired");
         require(_option.state == State.Locked, "The option is not locked");
         require(
             paymentToken == _option.paymentToken,
             "Payment token not valid"
         );
-        require(amount == _option.strike, "Amount is not valid");
+        require(amount == _option.amount, "Amount is not valid");
 
         _option.state = State.Exercised;
+
+        options[optionID] = _option;
 
         erc20Pool.exerciseErc20(
             _option.buyer,
