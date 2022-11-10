@@ -256,43 +256,136 @@ describe("OptionTrigger", function() {
             });
         });
 
-        describe("exerciseOption()", async function(){
-            
-            async function createAndBuyOption(optionTrigger: any, owner: any, erc20: any, otherErc20: any, erc20Pool: any, otherAccount: any){
-            
-                //Set optionTriggerContract
-                erc20Pool.connect(owner).setOptionTrigger(optionTrigger.address);
-                
-                await otherErc20.connect(owner).approve(erc20Pool.address, 1000);
-    
-                await optionTrigger.connect(owner).sellOption(
-                    200, //strike price
-                    100, //amount of tokens msg.sender offers
-                    5,   //premium amount
-                    86400 * 7,    //period (seconds) 86400 = 1 day
-                    erc20.address, //payment token
-                    otherErc20.address, //option token
-                    1 // 0 -> Call, 1 -> Put
-                );
-    
-                //Transfer funds to other account
-                await erc20.connect(owner).transfer(otherAccount.address, 1000);
-                //Other accounts approves erc20pool to transfer erc20 to option owner
-                await erc20.connect(otherAccount).approve(erc20Pool.address, 1000);
-    
-                await (optionTrigger.connect(otherAccount).buyOption(
-                    0,
-                    erc20.address, //not valid payment token
-                    5
-                ));
-            }
+    });
 
-            it("Should not revert", async function(){
+    describe("exerciseOption()", async function(){
+            
+        it("Should not revert, buyer exercises option on the 6th day", async function(){
+
+            const {optionTrigger, owner, erc20, otherErc20, erc20Pool, otherAccount} = await loadFixture(deployOptionTriggerFixture);
+            
+            //Set optionTriggerContract
+            erc20Pool.connect(owner).setOptionTrigger(optionTrigger.address);
+            
+            await otherErc20.connect(owner).approve(erc20Pool.address, 1000);
+
+            await optionTrigger.connect(owner).sellOption(
+                200, //strike price
+                100, //amount of tokens msg.sender offers
+                5,   //premium amount
+                86400 * 7,    //period (seconds) 86400 = 1 day
+                erc20.address, //payment token
+                otherErc20.address, //option token
+                1 // 0 -> Call, 1 -> Put
+            );
+
+            //Transfer funds to other account
+            await erc20.connect(owner).transfer(otherAccount.address, 1000);
+            //Other accounts approves erc20pool to transfer erc20 to option owner
+            await erc20.connect(otherAccount).approve(erc20Pool.address, 1000);
+            await (optionTrigger.connect(otherAccount).buyOption(
+                0,
+                erc20.address, //not valid payment token
+                5
+            ));
+
+            // FINISHED CREATING AND BUYING OPTION
+
+            //Advance block timestamp
+            await ethers.provider.send("evm_increaseTime", [86400*6]);
+
+            await optionTrigger.connect(otherAccount).exerciseOption(
+                0,
+                erc20.address,
+                100
+            );
+            await expect((await optionTrigger.options(0)).state).to.equal(2);
+        });
+
+        it("Should revert with 'You are not the buyer'", async function(){
+
+            const {optionTrigger, owner, erc20, otherErc20, erc20Pool, otherAccount} = await loadFixture(deployOptionTriggerFixture);
+            
+            //Set optionTriggerContract
+            erc20Pool.connect(owner).setOptionTrigger(optionTrigger.address);
+            
+            await otherErc20.connect(owner).approve(erc20Pool.address, 1000);
+
+            await optionTrigger.connect(owner).sellOption(
+                200, //strike price
+                100, //amount of tokens msg.sender offers
+                5,   //premium amount
+                86400 * 7,    //period (seconds) 86400 = 1 day
+                erc20.address, //payment token
+                otherErc20.address, //option token
+                1 // 0 -> Call, 1 -> Put
+            );
+
+            //Transfer funds to other account
+            await erc20.connect(owner).transfer(otherAccount.address, 1000);
+            //Other accounts approves erc20pool to transfer erc20 to option owner
+            await erc20.connect(otherAccount).approve(erc20Pool.address, 1000);
+            await (optionTrigger.connect(otherAccount).buyOption(
+                0,
+                erc20.address, //not valid payment token
+                5
+            ));
+
+            // FINISHED CREATING AND BUYING OPTION
+
+            await expect(optionTrigger.connect(owner).exerciseOption(
+                0,
+                erc20.address,
+                100
+            )).to.be.revertedWith("You are not the buyer");
+        });
+
+        it("Should revert with 'The option expired'", async function(){
+
+            const {optionTrigger, owner, erc20, otherErc20, erc20Pool, otherAccount} = await loadFixture(deployOptionTriggerFixture);
+            
+            //Set optionTriggerContract
+            erc20Pool.connect(owner).setOptionTrigger(optionTrigger.address);
+            
+            await otherErc20.connect(owner).approve(erc20Pool.address, 1000);
+
+            await optionTrigger.connect(owner).sellOption(
+                200, //strike price
+                100, //amount of tokens msg.sender offers
+                5,   //premium amount
+                86400 * 7,    //period (seconds) 86400 = 1 day
+                erc20.address, //payment token
+                otherErc20.address, //option token
+                1 // 0 -> Call, 1 -> Put
+            );
+
+            //Transfer funds to other account
+            await erc20.connect(owner).transfer(otherAccount.address, 1000);
+            //Other accounts approves erc20pool to transfer erc20 to option owner
+            await erc20.connect(otherAccount).approve(erc20Pool.address, 1000);
+            await (optionTrigger.connect(otherAccount).buyOption(
+                0,
+                erc20.address, //not valid payment token
+                5
+            ));
+
+            // FINISHED CREATING AND BUYING OPTION
+
+            //Advance block timestamp
+            await ethers.provider.send("evm_increaseTime", [86400*7]);
+
+            await expect(optionTrigger.connect(otherAccount).exerciseOption(
+                0,
+                erc20.address,
+                100
+            )).to.be.revertedWith("The option expired");
+        });
+
+        describe("Events", async function(){
+            it("Should emit OptionExecuted(0)", async function(){
 
                 const {optionTrigger, owner, erc20, otherErc20, erc20Pool, otherAccount} = await loadFixture(deployOptionTriggerFixture);
                 
-                // createAndBuyOption(optionTrigger, owner, erc20, otherErc20, erc20Pool, otherAccount);
-
                 //Set optionTriggerContract
                 erc20Pool.connect(owner).setOptionTrigger(optionTrigger.address);
                 
@@ -320,16 +413,107 @@ describe("OptionTrigger", function() {
 
                 // FINISHED CREATING AND BUYING OPTION
 
-                await optionTrigger.connect(otherAccount).excerciseOption(
+                await expect(optionTrigger.connect(otherAccount).exerciseOption(
                     0,
                     erc20.address,
                     100
-                );
-                await expect((await optionTrigger.options(0)).state).to.equal(2);
-
-
-                
+                )).to.emit(optionTrigger, "OptionExecuted").withArgs(0);
             });
+        });
+    });
+
+    describe("cancelOption()", async function() {
+        
+        it("Should not revert", async function () {
+
+            const {optionTrigger, owner, erc20, otherErc20, erc20Pool, otherAccount} = await loadFixture(deployOptionTriggerFixture);
+                
+                //Set optionTriggerContract
+                erc20Pool.connect(owner).setOptionTrigger(optionTrigger.address);
+                
+                await otherErc20.connect(owner).approve(erc20Pool.address, 1000);
+    
+                await optionTrigger.connect(owner).sellOption(
+                    200, //strike price
+                    100, //amount of tokens msg.sender offers
+                    5,   //premium amount
+                    86400 * 7,    //period (seconds) 86400 = 1 day
+                    erc20.address, //payment token
+                    otherErc20.address, //option token
+                    0 // 0 -> Call, 1 -> Put
+                );
+
+                // FINISHED CREATING OPTION
+                await optionTrigger.connect(owner).cancelOption(0);
+
+                // State 4 -> Canceled
+                await expect((await optionTrigger.getOption(0)).state).to.equal(4); 
+        });
+
+        it("Should revert with 'You are not the owner of the option'", async function () {
+
+            const {optionTrigger, owner, erc20, otherErc20, erc20Pool, otherAccount} = await loadFixture(deployOptionTriggerFixture);
+                
+                //Set optionTriggerContract
+                erc20Pool.connect(owner).setOptionTrigger(optionTrigger.address);
+                
+                await otherErc20.connect(owner).approve(erc20Pool.address, 1000);
+    
+                await optionTrigger.connect(owner).sellOption(
+                    200, //strike price
+                    100, //amount of tokens msg.sender offers
+                    5,   //premium amount
+                    86400 * 7,    //period (seconds) 86400 = 1 day
+                    erc20.address, //payment token
+                    otherErc20.address, //option token
+                    0 // 0 -> Call, 1 -> Put
+                );
+    
+                // FINISHED CREATING OPTION
+                await expect(optionTrigger.connect(otherAccount).cancelOption(0)).to.be.revertedWith(
+                    "You are not the owner of the option"
+                );
+
+                // State 0 -> New
+                await expect((await optionTrigger.getOption(0)).state).to.equal(0); 
+        });
+
+        it("Should revert with 'Cannot cancel the option'", async function () {
+
+            const {optionTrigger, owner, erc20, otherErc20, erc20Pool, otherAccount} = await loadFixture(deployOptionTriggerFixture);
+                
+                //Set optionTriggerContract
+                erc20Pool.connect(owner).setOptionTrigger(optionTrigger.address);
+                
+                await otherErc20.connect(owner).approve(erc20Pool.address, 1000);
+    
+                await optionTrigger.connect(owner).sellOption(
+                    200, //strike price
+                    100, //amount of tokens msg.sender offers
+                    5,   //premium amount
+                    86400 * 7,    //period (seconds) 86400 = 1 day
+                    erc20.address, //payment token
+                    otherErc20.address, //option token
+                    0 // 0 -> Call, 1 -> Put
+                );
+    
+                //Transfer funds to other account
+                await erc20.connect(owner).transfer(otherAccount.address, 1000);
+                //Other accounts approves erc20pool to transfer erc20 to option owner
+                await erc20.connect(otherAccount).approve(erc20Pool.address, 1000);
+                await (optionTrigger.connect(otherAccount).buyOption(
+                    0,
+                    erc20.address, //not valid payment token
+                    5
+                ));
+    
+                // FINISHED CREATING AND BUYING OPTION
+                await expect(optionTrigger.connect(owner).cancelOption(0)).to.be.revertedWith(
+                    "Cannot cancel the option"
+                );
+
+                // State 1 -> New
+                await expect((await optionTrigger.getOption(0)).state).to.equal(1); 
         });
     });
 

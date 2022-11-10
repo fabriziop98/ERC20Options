@@ -21,7 +21,7 @@ contract ERC20Pool is Ownable {
 
     // Modifiers
     modifier reentrancyGuard() {
-        require(!locked);
+        require(!locked, "Reentrancy");
         locked = true;
         _;
         locked = false;
@@ -143,18 +143,28 @@ contract ERC20Pool is Ownable {
 
         //transfer from buyer to seller
         transferErc20(_buyer,_primePaymentToken,_seller,_primePaymentAmount);
-        //unlock money from pool
+        //unlock tokens from pool
         unlock(_optionTokenAmount, _optionToken);
         //transfer pool to buyer
         transferTo(_optionToken,_buyer,_optionTokenAmount);
       
     }
 
+    function unlockAndSendErc20(address _erc20, address _beneficiary, uint256 _amount)
+        external
+        onlyOptionContract(msg.sender)
+        validAddress(_erc20)
+    {
+        //unlock tokens from pool
+        unlock(_amount, _erc20);
+        //transfer pool to buyer
+        transferTo(_erc20, _beneficiary, _amount);
+    }
+
     // @notice transferTo only to send valid ERC20 tokens to buyer
-    // TODO: shouldn't be private ?
     function transferTo(
         address _erc20Address,
-        address _buyer,
+        address _beneficiary,
         uint256 _amount
     )
         public
@@ -169,11 +179,10 @@ contract ERC20Pool is Ownable {
         unlockedErc20Balance[IERC20(_erc20Address)] -= _amount;
 
         bool success = IERC20(_erc20Address).transfer(
-            _buyer,
+            _beneficiary,
             _amount
         );
         require(success, "Transfer failed");
-
         emit TransferedAmount(_erc20Address, _amount);
     }
 
