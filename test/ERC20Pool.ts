@@ -45,6 +45,33 @@ describe("ERC20Pool", function() {
         })
     });
 
+    describe("receiveFee()", async function() {
+        it("Should not revert", async function() {
+            const {erc20Pool, otherAccount, optionContract, owner, erc20} = await loadFixture(deployERC20PoolFixture);
+            
+            await erc20.connect(owner).transfer(otherAccount.address, 100);
+            await erc20.connect(otherAccount).approve(erc20Pool.address, 100);
+            
+            await erc20Pool.connect(optionContract).receiveFee(otherAccount.address, erc20.address, 1);
+
+            await expect(await erc20Pool.getFees(erc20.address)).to.equal(1);
+        });
+
+        describe("Events", async function () {
+            it("Should Emit FeeReceived(erc20.address, 1)", async function() {
+                const {erc20Pool, otherAccount, optionContract, owner, erc20} = await loadFixture(deployERC20PoolFixture);
+                
+                await erc20.connect(owner).transfer(otherAccount.address, 100);
+                await erc20.connect(otherAccount).approve(erc20Pool.address, 100);
+                
+                await expect(erc20Pool.connect(optionContract).receiveFee(otherAccount.address, erc20.address, 1))
+                    .to.emit(erc20Pool, "FeeReceived").withArgs(
+                        erc20.address, 1
+                    );
+            });
+        });
+    });
+
     describe("transferLockedErc20()", async function(){
         it("Should update lockedErc20Balance mapping", async function() {
             const {erc20Pool, owner, erc20, optionContract} = await loadFixture(deployERC20PoolFixture);

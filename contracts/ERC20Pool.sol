@@ -11,11 +11,13 @@ contract ERC20Pool is Ownable {
     mapping(IERC20 => uint256) public unlockedErc20Balance;
 
     address public optionTrigger;
+    mapping(IERC20 => uint256) public fees;
 
     // Events
     event LockedAmount(address erc20, uint256 amount, uint256 newAmount);
     event UnlockedAmount(address erc20, uint256 amount, uint256 newAmount);
     event TransferedAmount(address erc20, uint256 amount);
+    event FeeReceived(address erc20, uint256 amount);
 
     constructor() {}
 
@@ -50,11 +52,16 @@ contract ERC20Pool is Ownable {
         optionTrigger = _address;
     }
 
-    function receiveFee(address _erc20Address, uint256 _amount)
+    function receiveFee(address _sender, address _erc20Address, uint256 _amount)
         external
         validAddress(_erc20Address)
         validAmount(_amount)
-    {}
+    {
+        fees[IERC20(_erc20Address)] += _amount;
+        bool success = IERC20(_erc20Address).transferFrom(_sender, address(this), _amount);
+        require(success, "Failed to receive fee");
+        emit FeeReceived(_erc20Address, _amount);
+    }
 
     // @notice lock for options protocol to lock erc20 compatible tokens to pool
     function lock(address _erc20Address, uint256 _amount)
@@ -207,5 +214,9 @@ contract ERC20Pool is Ownable {
 
     function getOptionTrigger() public view returns(address) {
         return optionTrigger;
+    }
+
+    function getFees(address _erc20) external view returns(uint256){
+        return fees[IERC20(_erc20)];
     }
 }

@@ -56,6 +56,28 @@ describe("OptionTrigger", function() {
 
         });
 
+        it("Should not revert and check fee = 1", async function(){
+            const {optionTrigger, owner, erc20, otherErc20, erc20Pool} = await loadFixture(deployOptionTriggerFixture);
+
+            //Set optionTriggerContract
+            erc20Pool.connect(owner).setOptionTrigger(optionTrigger.address);
+
+            await otherErc20.connect(owner).approve(erc20Pool.address, 1000);
+
+            await optionTrigger.connect(owner).sellOption(
+                200, //strike price
+                100, //amount of tokens msg.sender offers
+                5,   //premium amount
+                86400 * 7,    //period (seconds) 86400 = 1 day
+                erc20.address, //payment token
+                otherErc20.address, //option token
+                1 // 0 -> Call, 1 -> Put
+            );
+            
+            //Amount of otherErc20 should be 1
+            await expect(await erc20Pool.getFees(otherErc20.address)).to.equal(1);
+        });
+
         it("Should revert with 'Strike is too small'", async function(){
             const {optionTrigger, owner, erc20, otherErc20} = await loadFixture(deployOptionTriggerFixture);
             
@@ -115,7 +137,6 @@ describe("OptionTrigger", function() {
             )).to.be.revertedWith("Period is too long");
             
         });
-        
     });
 
     describe("buyOption()", async function() {
@@ -294,10 +315,11 @@ describe("OptionTrigger", function() {
             //Advance block timestamp
             await ethers.provider.send("evm_increaseTime", [86400*6]);
 
+            const effectiveAmount = 100 - Number((await optionTrigger.getOption(0)).fee);
             await optionTrigger.connect(otherAccount).exerciseOption(
                 0,
                 erc20.address,
-                100
+                effectiveAmount
             );
             await expect((await optionTrigger.options(0)).state).to.equal(2);
         });
@@ -413,10 +435,11 @@ describe("OptionTrigger", function() {
 
                 // FINISHED CREATING AND BUYING OPTION
 
+                const effectiveAmount = 100 - Number((await optionTrigger.getOption(0)).fee);
                 await expect(optionTrigger.connect(otherAccount).exerciseOption(
                     0,
                     erc20.address,
-                    100
+                    effectiveAmount
                 )).to.emit(optionTrigger, "OptionExecuted").withArgs(0);
             });
         });

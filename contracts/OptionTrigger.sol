@@ -6,6 +6,7 @@ import "./ERC20Pool.sol";
 // import "../interfaces/IERC20.sol";
 
 contract OptionTrigger is Ownable {
+
     enum State {
         New, /* 0 */
         Locked, /* 1 */
@@ -36,6 +37,8 @@ contract OptionTrigger is Ownable {
         address paymentToken;
         //ERC20 that will be offered in the option
         address optionToken;
+        //Fee registered
+        uint256 fee;
     }
     bool internal locked;
 
@@ -94,11 +97,12 @@ contract OptionTrigger is Ownable {
 
         optionID = options.length;
 
-        //TODO: fee
-        // uint256 fee = 1;
+        uint256 fee = calculateFee(amount);
+        console.log("amount: ", amount);
+        console.log("fee: ",fee);
 
         //efective amount: amount - fee
-        // amount -= fee;
+        amount -= fee;
         options.push(
             Option(
                 State.New,
@@ -110,13 +114,14 @@ contract OptionTrigger is Ownable {
                 block.timestamp + period,
                 optionType,
                 paymentToken,
-                optionToken
+                optionToken,
+                fee
             )
         );
         // Add to seller
         sellerOptions[msg.sender].push(optionID);
 
-        //TODO: calculate fees and substract it from amount
+        sendFee(msg.sender, optionToken, fee);
 
         erc20Pool.transferLockedErc20(msg.sender, optionToken, amount);
 
@@ -161,9 +166,6 @@ contract OptionTrigger is Ownable {
     ) public {
         Option memory _option = options[optionID];
 
-        console.log("block timestamp: ", block.timestamp);
-        console.log("option expiration: ", _option.expiration);
-
         require(_option.buyer == msg.sender, "You are not the buyer");
         // The option expiration has to be in the future.
         require(_option.expiration >= block.timestamp, "The option expired");
@@ -204,11 +206,20 @@ contract OptionTrigger is Ownable {
         options[_optionId] = _option;
     }
 
-    /**
-     * @notice Seller could cancel option only if is in state New.
-     * Nobody at the moment buy this option.
-     *
-     */
+    // Calculate fee
+    function calculateFee(uint256 _optionAmount) internal pure
+        returns (uint256) 
+    {
+        require(_optionAmount > 0 && _optionAmount / 100 > 0, "Option amount not valid");
+        return _optionAmount / 100;
+    }
+
+    function sendFee(address _sender, address _erc20, uint256 _amount) 
+        internal
+    {
+        //Validations are made in receiveFee method
+        erc20Pool.receiveFee(_sender, _erc20, _amount);
+    }
 
     function getBuyerOptions(address _address) public view returns (uint[] memory) {
         return buyerOptions[_address];
@@ -226,8 +237,4 @@ contract OptionTrigger is Ownable {
         return options;
     }
 
-    // Transfer fee
-    /*   function transferFee(uint256 amount) internal {
-        require(amount > 0, "Amount not valid");
-    } */
 }
