@@ -36,7 +36,7 @@ describe("OptionTrigger", function() {
             await otherErc20.connect(owner).approve(erc20Pool.address, 1000);
 
             await expect(optionTrigger.connect(owner).sellOption(
-                200, //strike price
+                200, //strike price: erc20 amount
                 100, //amount of tokens msg.sender offers
                 5,   //premium amount
                 86400 * 7,    //period (seconds) 86400 = 1 day
@@ -65,7 +65,7 @@ describe("OptionTrigger", function() {
             await otherErc20.connect(owner).approve(erc20Pool.address, 1000);
 
             await optionTrigger.connect(owner).sellOption(
-                200, //strike price
+                200, //strike price: erc20 amount
                 100, //amount of tokens msg.sender offers
                 5,   //premium amount
                 86400 * 7,    //period (seconds) 86400 = 1 day
@@ -82,7 +82,7 @@ describe("OptionTrigger", function() {
             const {optionTrigger, owner, erc20, otherErc20} = await loadFixture(deployOptionTriggerFixture);
             
             await expect(optionTrigger.connect(owner).sellOption(
-                0, //strike price
+                0, //strike price: erc20 amount
                 100, //amount of tokens msg.sender offers
                 5,   //premium amount
                 86400 * 7,    //period (seconds) 86400 = 1 day
@@ -97,7 +97,7 @@ describe("OptionTrigger", function() {
             const {optionTrigger, owner, erc20, otherErc20} = await loadFixture(deployOptionTriggerFixture);
             
             await expect(optionTrigger.connect(owner).sellOption(
-                200, //strike price
+                200, //strike price: erc20 amount
                 0, //amount of tokens msg.sender offers
                 5,   //premium amount
                 86400 * 7,    //period (seconds) 86400 = 1 day
@@ -112,7 +112,7 @@ describe("OptionTrigger", function() {
             const {optionTrigger, owner, erc20, otherErc20} = await loadFixture(deployOptionTriggerFixture);
             
             await expect(optionTrigger.connect(owner).sellOption(
-                200, //strike price
+                200, //strike price: erc20 amount
                 100, //amount of tokens msg.sender offers
                 5,   //premium amount
                 200,    //period (seconds) 86400 = 1 day
@@ -127,7 +127,7 @@ describe("OptionTrigger", function() {
             const {optionTrigger, owner, erc20, otherErc20} = await loadFixture(deployOptionTriggerFixture);
             
             await expect(optionTrigger.connect(owner).sellOption(
-                200, //strike price
+                200, //strike price: erc20 amount
                 100, //amount of tokens msg.sender offers
                 5,   //premium amount
                 86400 * 29,    //period (seconds) 86400 = 1 day
@@ -151,7 +151,7 @@ describe("OptionTrigger", function() {
             await otherErc20.connect(owner).approve(erc20Pool.address, 1000);
 
             await optionTrigger.connect(owner).sellOption(
-                200, //strike price
+                200, //strike price: erc20 amount
                 100, //amount of tokens msg.sender offers
                 5,   //premium amount
                 86400 * 7,    //period (seconds) 86400 = 1 day
@@ -189,7 +189,7 @@ describe("OptionTrigger", function() {
             await otherErc20.connect(owner).approve(erc20Pool.address, 1000);
 
             await optionTrigger.connect(owner).sellOption(
-                200, //strike price
+                200, //strike price: erc20 amount
                 100, //amount of tokens msg.sender offers
                 5,   //premium amount
                 86400 * 7,    //period (seconds) 86400 = 1 day
@@ -221,7 +221,7 @@ describe("OptionTrigger", function() {
             await otherErc20.connect(owner).approve(erc20Pool.address, 1000);
 
             await optionTrigger.connect(owner).sellOption(
-                200, //strike price
+                200, //strike price: erc20 amount
                 100, //amount of tokens msg.sender offers
                 5,   //premium amount
                 86400 * 7,    //period (seconds) 86400 = 1 day
@@ -253,7 +253,7 @@ describe("OptionTrigger", function() {
                 await otherErc20.connect(owner).approve(erc20Pool.address, 1000);
         
                 await optionTrigger.connect(owner).sellOption(
-                    200, //strike price
+                    200, //strike price: erc20 amount
                     100, //amount of tokens msg.sender offers
                     5,   //premium amount
                     86400 * 7,    //period (seconds) 86400 = 1 day
@@ -291,7 +291,7 @@ describe("OptionTrigger", function() {
             await otherErc20.connect(owner).approve(erc20Pool.address, 1000);
 
             await optionTrigger.connect(owner).sellOption(
-                200, //strike price
+                200, //strike price: erc20 amount
                 100, //amount of tokens msg.sender offers
                 5,   //premium amount
                 86400 * 7,    //period (seconds) 86400 = 1 day
@@ -315,7 +315,7 @@ describe("OptionTrigger", function() {
             //Advance block timestamp
             await ethers.provider.send("evm_increaseTime", [86400*6]);
 
-            const effectiveAmount = 100 - Number((await optionTrigger.getOption(0)).fee);
+            const effectiveAmount = 200;
             await optionTrigger.connect(otherAccount).exerciseOption(
                 0,
                 erc20.address,
@@ -334,7 +334,7 @@ describe("OptionTrigger", function() {
             await otherErc20.connect(owner).approve(erc20Pool.address, 1000);
 
             await optionTrigger.connect(owner).sellOption(
-                200, //strike price
+                200, //strike price: erc20 amount
                 100, //amount of tokens msg.sender offers
                 5,   //premium amount
                 86400 * 7,    //period (seconds) 86400 = 1 day
@@ -372,7 +372,7 @@ describe("OptionTrigger", function() {
             await otherErc20.connect(owner).approve(erc20Pool.address, 1000);
 
             await optionTrigger.connect(owner).sellOption(
-                200, //strike price
+                200, //strike price: erc20 amount
                 100, //amount of tokens msg.sender offers
                 5,   //premium amount
                 86400 * 7,    //period (seconds) 86400 = 1 day
@@ -414,7 +414,7 @@ describe("OptionTrigger", function() {
                 await otherErc20.connect(owner).approve(erc20Pool.address, 1000);
     
                 await optionTrigger.connect(owner).sellOption(
-                    200, //strike price
+                    200, //strike price: erc20 amount
                     100, //amount of tokens msg.sender offers
                     5,   //premium amount
                     86400 * 7,    //period (seconds) 86400 = 1 day
@@ -435,7 +435,7 @@ describe("OptionTrigger", function() {
 
                 // FINISHED CREATING AND BUYING OPTION
 
-                const effectiveAmount = 100 - Number((await optionTrigger.getOption(0)).fee);
+                const effectiveAmount = 200;
                 await expect(optionTrigger.connect(otherAccount).exerciseOption(
                     0,
                     erc20.address,
@@ -457,7 +457,7 @@ describe("OptionTrigger", function() {
                 await otherErc20.connect(owner).approve(erc20Pool.address, 1000);
     
                 await optionTrigger.connect(owner).sellOption(
-                    200, //strike price
+                    200, //strike price: erc20 amount
                     100, //amount of tokens msg.sender offers
                     5,   //premium amount
                     86400 * 7,    //period (seconds) 86400 = 1 day
@@ -483,7 +483,7 @@ describe("OptionTrigger", function() {
                 await otherErc20.connect(owner).approve(erc20Pool.address, 1000);
     
                 await optionTrigger.connect(owner).sellOption(
-                    200, //strike price
+                    200, //strike price: erc20 amount
                     100, //amount of tokens msg.sender offers
                     5,   //premium amount
                     86400 * 7,    //period (seconds) 86400 = 1 day
@@ -511,7 +511,7 @@ describe("OptionTrigger", function() {
                 await otherErc20.connect(owner).approve(erc20Pool.address, 1000);
     
                 await optionTrigger.connect(owner).sellOption(
-                    200, //strike price
+                    200, //strike price: erc20 amount
                     100, //amount of tokens msg.sender offers
                     5,   //premium amount
                     86400 * 7,    //period (seconds) 86400 = 1 day

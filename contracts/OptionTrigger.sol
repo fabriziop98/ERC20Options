@@ -181,7 +181,7 @@ contract OptionTrigger is Ownable, IUniswapV2Callee {
             paymentToken == _option.paymentToken,
             "Payment token not valid"
         );
-        require(amount == _option.amount, "Amount is not valid");
+        require(amount == _option.strike, "Amount is not valid");
 
         _option.state = State.Exercised;
 
