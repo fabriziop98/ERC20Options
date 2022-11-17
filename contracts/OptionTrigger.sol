@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
+import {IUniswapV2Factory} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
+import {IUniswapV2Pair} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
+import {IUniswapV2Callee} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Callee.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./ERC20Pool.sol";
-// import "../interfaces/IERC20.sol";
+import "hardhat/console.sol";
 
-contract OptionTrigger is Ownable {
-
+contract OptionTrigger is Ownable, IUniswapV2Callee {
     enum State {
         New, /* 0 */
         Locked, /* 1 */
@@ -46,6 +48,11 @@ contract OptionTrigger is Ownable {
     Option[] public options;
     mapping(address => uint[]) public sellerOptions;
     mapping(address => uint[]) public buyerOptions;
+    //Erc20 WETH
+    address private constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    // Uniswap V2 factory
+    address private constant FACTORY =
+        0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
 
     // Events
     event OptionCreated(
@@ -71,8 +78,7 @@ contract OptionTrigger is Ownable {
     /**
      * @notice initializes the contract with the address of the pool.
      */
-    constructor(address _erc20Pool)
-    {
+    constructor(address _erc20Pool) {
         erc20Pool = ERC20Pool(_erc20Pool);
     }
 
@@ -84,7 +90,8 @@ contract OptionTrigger is Ownable {
         address paymentToken,
         address optionToken,
         OptionType optionType // 0 -> Call, 1 -> Put
-    ) external
+    )
+        external
         validAddress(paymentToken)
         validAddress(optionToken)
         reentrancyGuard
@@ -99,7 +106,7 @@ contract OptionTrigger is Ownable {
 
         uint256 fee = calculateFee(amount);
         console.log("amount: ", amount);
-        console.log("fee: ",fee);
+        console.log("fee: ", fee);
 
         //efective amount: amount - fee
         amount -= fee;
@@ -192,40 +199,158 @@ contract OptionTrigger is Ownable {
     }
 
     /**
+     * @notice Buyer can exercise the option using a FlashLoan provided in
+     * the Dapp
+     * @param optionID - Index of the option in array options
+     * @param paymentToken - Erc20 that user will borrow to UniSwap
+     * @param amount - Amount of the token that user can use to buy the asset at strike price.
+     */
+    function exerciseOptionFlashLoan(
+        uint256 optionID,
+        address paymentToken,
+        uint256 amount
+    ) public {
+        Option memory _option = options[optionID];
+
+        require(_option.buyer == msg.sender, "You are not the buyer");
+        // The option expiration has to be in the future.
+        require(_option.expiration >= block.timestamp, "The option expired");
+        require(_option.state == State.Locked, "The option is not locked");
+        require(
+            paymentToken == _option.paymentToken,
+            "Payment token not valid"
+        );
+        require(amount == _option.amount, "Amount is not valid");
+
+        _option.state = State.Exercised;
+
+        options[optionID] = _option;
+
+        //FlashLoan Logic
+        //1.Verify that the pair TokenBorrow / WETH exists
+        address pair = IUniswapV2Factory(FACTORY).getPair(paymentToken, WETH);
+        require(pair != address(0), "!pair");
+        //2.See which is the token that we want to borrow, and put the other in 0.
+        //Remember that is a pair, and we want one token of the two tokens in the pool.
+        address token0 = IUniswapV2Pair(pair).token0();
+        address token1 = IUniswapV2Pair(pair).token1();
+        uint amount0Out = paymentToken == token0 ? amount : 0;
+        uint amount1Out = paymentToken == token1 ? amount : 0;
+
+        //3.Need to pass some data the uniswapV2Call.
+        bytes memory data = abi.encode(paymentToken, amount, _option);
+
+        //4.Sends the call to Execute the flashLoan. Internally swap call uniswapV2Call.
+        //That is the method internally that do the flashloan.
+        //Inside that method you have the flashloan Available.
+        IUniswapV2Pair(pair).swap(amount0Out, amount1Out, address(this), data);
+
+        erc20Pool.exerciseErc20(
+            _option.buyer,
+            _option.seller,
+            paymentToken,
+            amount,
+            _option.optionToken,
+            _option.amount
+        );
+        emit OptionExecuted(optionID);
+    }
+
+    // called by pair contract
+    function uniswapV2Call(
+        address _sender,
+        uint _amount0,
+        uint _amount1,
+        bytes calldata _data
+    ) external override {
+        address token0 = IUniswapV2Pair(msg.sender).token0();
+        address token1 = IUniswapV2Pair(msg.sender).token1();
+        address pair = IUniswapV2Factory(FACTORY).getPair(token0, token1);
+        //Verify that only this contract can call this method
+        require(_sender == address(this), "Only Contract can call this method");
+
+        (address tokenBorrow, uint amount, Option memory option) = abi.decode(
+            _data,
+            (address, uint, Option)
+        );
+
+        // about 0.3%
+        uint fee = ((amount * 3) / 997) + 1;
+        uint amountToRepay = amount + fee;
+
+        erc20Pool.exerciseErc20(
+            option.buyer,
+            option.seller,
+            tokenBorrow,
+            amount,
+            option.optionToken,
+            option.amount
+        );
+        //Here we have to do the swap
+
+        IERC20(tokenBorrow).transfer(pair, amountToRepay);
+    }
+
+    /**
      * @notice Seller could cancel option only if it is in state New or Expired
      * Nobody at the moment can buy this option.
      * @param _optionId - index of the option in array options
      */
     function cancelOption(uint _optionId) external virtual {
         Option memory _option = options[_optionId];
-        require(_option.seller == msg.sender, "You are not the owner of the option");
-        require(_option.state == State.New || _option.state == State.Expired, "Cannot cancel the option");
+        require(
+            _option.seller == msg.sender,
+            "You are not the owner of the option"
+        );
+        require(
+            _option.state == State.New || _option.state == State.Expired,
+            "Cannot cancel the option"
+        );
         _option.state = State.Canceled;
         //Transfer to owner of the option
-        erc20Pool.unlockAndSendErc20(_option.optionToken ,_option.seller, _option.amount);
+        erc20Pool.unlockAndSendErc20(
+            _option.optionToken,
+            _option.seller,
+            _option.amount
+        );
         options[_optionId] = _option;
     }
 
     // Calculate fee
-    function calculateFee(uint256 _optionAmount) internal pure
-        returns (uint256) 
+    function calculateFee(uint256 _optionAmount)
+        internal
+        pure
+        returns (uint256)
     {
-        require(_optionAmount > 0 && _optionAmount / 100 > 0, "Option amount not valid");
+        require(
+            _optionAmount > 0 && _optionAmount / 100 > 0,
+            "Option amount not valid"
+        );
         return _optionAmount / 100;
     }
 
-    function sendFee(address _sender, address _erc20, uint256 _amount) 
-        internal
-    {
+    function sendFee(
+        address _sender,
+        address _erc20,
+        uint256 _amount
+    ) internal {
         //Validations are made in receiveFee method
         erc20Pool.receiveFee(_sender, _erc20, _amount);
     }
 
-    function getBuyerOptions(address _address) public view returns (uint[] memory) {
+    function getBuyerOptions(address _address)
+        public
+        view
+        returns (uint[] memory)
+    {
         return buyerOptions[_address];
     }
 
-    function getSellerOptions(address _address) public view returns (uint[] memory) {
+    function getSellerOptions(address _address)
+        public
+        view
+        returns (uint[] memory)
+    {
         return sellerOptions[_address];
     }
 
@@ -236,5 +361,4 @@ contract OptionTrigger is Ownable {
     function getAllOptions() public view returns (Option[] memory) {
         return options;
     }
-
 }
