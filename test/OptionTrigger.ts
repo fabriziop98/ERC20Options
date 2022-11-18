@@ -1,5 +1,6 @@
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
+import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
 
 describe("OptionTrigger", function() {
@@ -53,6 +54,7 @@ describe("OptionTrigger", function() {
             await expect((await optionTrigger.getOption(0)).seller).to.equal(owner.address);
             //seller option id should be 0
             await expect(Number(await optionTrigger.getSellerOptions(owner.address))).to.equal(Number("0"));
+            await expect(await otherErc20.balanceOf(owner.address)).to.equal(1000000000000000000000n - 100n);
 
         });
 
@@ -177,6 +179,8 @@ describe("OptionTrigger", function() {
                 .to.equal(1);
             await expect(Number(await optionTrigger.getBuyerOptions(otherAccount.address)))
                 .to.equal(Number("0"));
+            await expect(await erc20.balanceOf(owner.address)).to.equal(999999999999999999000n + 5n);
+            await expect(await erc20.balanceOf(otherAccount.address)).to.equal(1000 - 5);
         });
 
         it("Should revert with 'Payment token not valid'", async function() {
@@ -306,7 +310,7 @@ describe("OptionTrigger", function() {
             await erc20.connect(otherAccount).approve(erc20Pool.address, 1000);
             await (optionTrigger.connect(otherAccount).buyOption(
                 0,
-                erc20.address, //not valid payment token
+                erc20.address,
                 5
             ));
 
@@ -321,7 +325,11 @@ describe("OptionTrigger", function() {
                 erc20.address,
                 effectiveAmount
             );
+
             await expect((await optionTrigger.options(0)).state).to.equal(2);
+            await expect(await erc20.balanceOf(owner.address)).to.equal(999999999999999999005n + 200n);
+            await expect(await erc20.balanceOf(otherAccount.address)).to.equal(995 - 200);
+            await expect(await otherErc20.balanceOf(otherAccount.address)).to.equal(99);
         });
 
         it("Should revert with 'You are not the buyer'", async function(){
@@ -455,7 +463,7 @@ describe("OptionTrigger", function() {
                 erc20Pool.connect(owner).setOptionTrigger(optionTrigger.address);
                 
                 await otherErc20.connect(owner).approve(erc20Pool.address, 1000);
-    
+
                 await optionTrigger.connect(owner).sellOption(
                     200, //strike price: erc20 amount
                     100, //amount of tokens msg.sender offers
@@ -469,8 +477,10 @@ describe("OptionTrigger", function() {
                 // FINISHED CREATING OPTION
                 await optionTrigger.connect(owner).cancelOption(0);
 
+
                 // State 4 -> Canceled
-                await expect((await optionTrigger.getOption(0)).state).to.equal(4); 
+                await expect((await optionTrigger.getOption(0)).state).to.equal(4);
+                await expect(await otherErc20.balanceOf(owner.address)).to.equal(999999999999999999999n); 
         });
 
         it("Should revert with 'You are not the owner of the option'", async function () {
