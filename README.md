@@ -15,7 +15,7 @@ npx hardhat run scripts/deploy.ts
 #Up the node of the fork mainnet 
 npx hardhat node 
 #Test with the fork mainet
-npx hardhat test --network localhost test/test-fork-mainnet.ts 
+npx hardhat test --network localhost test/FlashLoan.ts 
 #Connect to the console HardHat
 npx hardhat console --network localhost
 

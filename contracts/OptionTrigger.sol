@@ -181,7 +181,7 @@ contract OptionTrigger is Ownable, IUniswapV2Callee {
             paymentToken == _option.paymentToken,
             "Payment token not valid"
         );
-        require(amount == _option.strike, "Amount is not valid");
+        require(amount == _option.strike, "Amount is not valid"); 
 
         _option.state = State.Exercised;
 
@@ -220,7 +220,7 @@ contract OptionTrigger is Ownable, IUniswapV2Callee {
             paymentToken == _option.paymentToken,
             "Payment token not valid"
         );
-        require(amount == _option.amount, "Amount is not valid");
+        require(amount == _option.strike, "Amount is not valid");
 
         _option.state = State.Exercised;
 
@@ -245,7 +245,7 @@ contract OptionTrigger is Ownable, IUniswapV2Callee {
         //Inside that method you have the flashloan Available.
         IUniswapV2Pair(pair).swap(amount0Out, amount1Out, address(this), data);
 
-        erc20Pool.exerciseErc20(
+/*         erc20Pool.exerciseErc20(
             _option.buyer,
             _option.seller,
             paymentToken,
@@ -253,7 +253,7 @@ contract OptionTrigger is Ownable, IUniswapV2Callee {
             _option.optionToken,
             _option.amount
         );
-        emit OptionExecuted(optionID);
+        emit OptionExecuted(optionID); */
     }
 
     // called by pair contract
@@ -278,17 +278,18 @@ contract OptionTrigger is Ownable, IUniswapV2Callee {
         uint fee = ((amount * 3) / 997) + 1;
         uint amountToRepay = amount + fee;
 
-        erc20Pool.exerciseErc20(
+      /*   erc20Pool.exerciseErc20(
             option.buyer,
             option.seller,
             tokenBorrow,
             amount,
             option.optionToken,
             option.amount
-        );
+        ); */
         //Here we have to do the swap
-
-        IERC20(tokenBorrow).transfer(pair, amountToRepay);
+         console.log("Before",IERC20(tokenBorrow).balanceOf(address(this)));
+         IERC20(tokenBorrow).transfer(pair, amountToRepay);
+         console.log("After", IERC20(tokenBorrow).balanceOf(address(this)));
     }
 
     /**
