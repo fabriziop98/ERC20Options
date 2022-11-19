@@ -277,19 +277,23 @@ contract OptionTrigger is Ownable, IUniswapV2Callee {
         // about 0.3%
         uint fee = ((amount * 3) / 997) + 1;
         uint amountToRepay = amount + fee;
-
-      /*   erc20Pool.exerciseErc20(
-            option.buyer,
+       console.log("I have like 2400 DAI , to buy weth and pay from Flashloan",IERC20(tokenBorrow).balanceOf(address(this)));
+        IERC20(tokenBorrow).approve(address(erc20Pool), amount);      
+       //console.log("Pool Have the access of 1200 DAI",IERC20(tokenBorrow).balanceOf(address(erc20Pool)));
+       console.log("Pool Have Allowance",IERC20(tokenBorrow).allowance(address(this),address(erc20Pool) ));
+       
+       erc20Pool.exerciseErc20WithFlashLoan(
+            address(this),
             option.seller,
             tokenBorrow,
             amount,
             option.optionToken,
             option.amount
-        ); */
-        //Here we have to do the swap
-         console.log("Before",IERC20(tokenBorrow).balanceOf(address(this)));
+        );
+        console.log("This contract Have lika a 1 WETH Allowance",IERC20(option.optionToken).allowance(address(this),address(erc20Pool) ));
+        //console.log("This Contract Have lika a 1 WETH", IERC20(option.optionToken).balanceOf(address(this)));
          IERC20(tokenBorrow).transfer(pair, amountToRepay);
-         console.log("After", IERC20(tokenBorrow).balanceOf(address(this)));
+         console.log("Have Little DAI", IERC20(tokenBorrow).balanceOf(address(this)));
     }
 
     /**

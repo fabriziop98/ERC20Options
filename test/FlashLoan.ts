@@ -12,7 +12,7 @@ describe("Excercise option with FlashLoan", () => {
   const seller = "0x242510fE96a4Fa2d4aC7dE68cD41944cd71d4099"; //Address with some WETH
   const ONE_TOKEN = ethers.utils.parseEther("1");
   const PRIME = ethers.utils.parseEther("5");
-  const DAI_STRIKE = ethers.utils.parseEther("1800");
+  const DAI_STRIKE = ethers.utils.parseEther("2404");
   const DAI_FEE= ethers.utils.parseEther("4");
 
   let erc20Pool: ERC20Pool;
@@ -95,11 +95,13 @@ describe("Excercise option with FlashLoan", () => {
   it("Should Exercise Option", async () => {
      //Advance block timestamp
      await ethers.provider.send("evm_increaseTime", [86400*6]);
-     await daiToken.connect(buyerSigner).approve(erc20Pool.address, DAI_STRIKE);
+     //await daiToken.connect(buyerSigner).approve(erc20Pool.address, DAI_STRIKE);
      await daiToken.connect(buyerSigner).transfer(optionTrigger.address, DAI_STRIKE);
-     console.log(await daiToken.connect(buyerSigner).balanceOf(optionTrigger.address));
-   /*    const amount = await (await optionTrigger.getOption(0)).strike; //0.9 
-      console.log(amount)
+     console.log("Approve para el contrato OptionTrigger 1200",await daiToken.connect(buyerSigner).balanceOf(optionTrigger.address));
+     console.log("Cuanto Weth ahi 0",await wethToken.connect(buyerSigner).balanceOf(optionTrigger.address));
+     
+     const amount = await (await optionTrigger.getOption(0)).strike; 
+      console.log("Menos de 1200 Dai hay que pagar",amount)
       
       await optionTrigger.connect(buyerSigner).exerciseOptionFlashLoan(
          0,
@@ -107,7 +109,9 @@ describe("Excercise option with FlashLoan", () => {
          amount
      );
      await expect((await optionTrigger.options(0)).state).to.equal(2); 
-     console.log(await wethToken.connect(buyerSigner).balanceOf(await buyerSigner.getAddress())); */
+
+     console.log("Cuanto me queda en el contrato",await daiToken.connect(buyerSigner).balanceOf(optionTrigger.address));
+     console.log(await wethToken.connect(buyerSigner).balanceOf(await buyerSigner.getAddress()));
 
   });
 

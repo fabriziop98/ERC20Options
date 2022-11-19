@@ -40,11 +40,11 @@ const config: HardhatUserConfig = {
       forking:{
         url: process.env.MAINNET_ALCHEMY_KEY as string
       }
-    },
+    }/* ,
     goerli: {
       url: `https://eth-goerli.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
       accounts: [GOERLI_PRIVATE_KEY],
-    }
+    } */
   } 
 };
 
