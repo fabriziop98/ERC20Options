@@ -19,9 +19,7 @@ contract ERC20Pool is Ownable {
     event TransferedAmount(address erc20, uint256 amount);
     event FeeReceived(address erc20, uint256 amount);
 
-    constructor() {
-        optionTrigger = msg.sender;
-    }
+    constructor() {}
 
     // Modifiers
     modifier reentrancyGuard() {
