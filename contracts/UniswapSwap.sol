@@ -3,7 +3,7 @@ pragma solidity ^0.8;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./IUniswapV2Router.sol";
-
+import "hardhat/console.sol";
 
 contract UniswapSwap {
   address private constant UNISWAP_V2_ROUTER =
@@ -17,6 +17,8 @@ contract UniswapSwap {
     uint _amountOutMin,
     address _to
   ) external {
+
+    console.log("Debo tener un allowance de ", _amountIn, IERC20(_tokenIn).allowance(msg.sender, address(this)));
     IERC20(_tokenIn).transferFrom(msg.sender, address(this), _amountIn);
     IERC20(_tokenIn).approve(UNISWAP_V2_ROUTER, _amountIn);
 
@@ -32,6 +34,7 @@ contract UniswapSwap {
       path[2] = _tokenOut;
     }
 
+   
     IUniswapV2Router(UNISWAP_V2_ROUTER).swapExactTokensForTokens(
       _amountIn,
       _amountOutMin,
@@ -40,8 +43,5 @@ contract UniswapSwap {
       block.timestamp
     );
   }
-  function getBalance(address _tokenAddress) external view returns (uint256) {
-        return IERC20(_tokenAddress).balanceOf(address(this));
-   }
 
 }

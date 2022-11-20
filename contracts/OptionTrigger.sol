@@ -4,6 +4,8 @@ pragma solidity 0.8.17;
 import {IUniswapV2Factory} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 import {IUniswapV2Pair} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import {IUniswapV2Callee} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Callee.sol";
+import {SingleSwap} from "./UniswapSwapV3.sol";
+
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./ERC20Pool.sol";
 import "hardhat/console.sol";
@@ -44,7 +46,9 @@ contract OptionTrigger is Ownable, IUniswapV2Callee {
     }
     bool internal locked;
 
+    uint  private constant INETH = 10**18;
     ERC20Pool public erc20Pool;
+    SingleSwap singleSwap;
     Option[] public options;
     mapping(address => uint[]) public sellerOptions;
     mapping(address => uint[]) public buyerOptions;
@@ -80,6 +84,7 @@ contract OptionTrigger is Ownable, IUniswapV2Callee {
      */
     constructor(address _erc20Pool) {
         erc20Pool = ERC20Pool(_erc20Pool);
+        singleSwap = new SingleSwap();
     }
 
     function sellOption(
@@ -181,7 +186,7 @@ contract OptionTrigger is Ownable, IUniswapV2Callee {
             paymentToken == _option.paymentToken,
             "Payment token not valid"
         );
-        require(amount == _option.strike, "Amount is not valid"); 
+        require(amount == _option.strike, "Amount is not valid");
 
         _option.state = State.Exercised;
 
@@ -245,15 +250,7 @@ contract OptionTrigger is Ownable, IUniswapV2Callee {
         //Inside that method you have the flashloan Available.
         IUniswapV2Pair(pair).swap(amount0Out, amount1Out, address(this), data);
 
-/*         erc20Pool.exerciseErc20(
-            _option.buyer,
-            _option.seller,
-            paymentToken,
-            amount,
-            _option.optionToken,
-            _option.amount
-        );
-        emit OptionExecuted(optionID); */
+        emit OptionExecuted(optionID);
     }
 
     // called by pair contract
@@ -274,15 +271,27 @@ contract OptionTrigger is Ownable, IUniswapV2Callee {
             (address, uint, Option)
         );
 
-        // about 0.3%
+        console.log(
+            "We borrow(FlashLoan) in DAI to excersice the option and get : ",
+            IERC20(tokenBorrow).balanceOf(address(this)) / INETH
+        );
+        // Calculate fee that we have to pay 0.3%
         uint fee = ((amount * 3) / 997) + 1;
         uint amountToRepay = amount + fee;
-       console.log("I have like 2400 DAI , to buy weth and pay from Flashloan",IERC20(tokenBorrow).balanceOf(address(this)));
-        IERC20(tokenBorrow).approve(address(erc20Pool), amount);      
-       //console.log("Pool Have the access of 1200 DAI",IERC20(tokenBorrow).balanceOf(address(erc20Pool)));
-       console.log("Pool Have Allowance",IERC20(tokenBorrow).allowance(address(this),address(erc20Pool) ));
-       
-       erc20Pool.exerciseErc20WithFlashLoan(
+        console.log(
+            "Total that we have to pay(flashloan + fee): ",
+            amountToRepay / INETH
+        );
+
+        //We have to approve to the pool to use our 1000 DAI to excersice the option and get 1 WETH
+        IERC20(tokenBorrow).approve(address(erc20Pool), amount);
+
+        console.log(
+            "We approve to our pool the borrow DAI : ",
+            IERC20(tokenBorrow).allowance(address(this), address(erc20Pool)) / INETH
+        );
+        //2 We excersice and we get aproximatly 1 ETH
+        erc20Pool.exerciseErc20(
             address(this),
             option.seller,
             tokenBorrow,
@@ -290,10 +299,41 @@ contract OptionTrigger is Ownable, IUniswapV2Callee {
             option.optionToken,
             option.amount
         );
-        console.log("This contract Have lika a 1 WETH Allowance",IERC20(option.optionToken).allowance(address(this),address(erc20Pool) ));
-        //console.log("This Contract Have lika a 1 WETH", IERC20(option.optionToken).balanceOf(address(this)));
-         IERC20(tokenBorrow).transfer(pair, amountToRepay);
-         console.log("Have Little DAI", IERC20(tokenBorrow).balanceOf(address(this)));
+
+        uint balanceTokenExcercise = IERC20(option.optionToken).balanceOf(
+            address(this)
+        ); // Our Balance
+        console.log(
+            "After excercise we get in WETH: (1 WETH - fee): ",
+            balanceTokenExcercise 
+        );
+        //2 Now we need to transfer our 1 WETH to singleSwap Contract
+        IERC20(option.optionToken).transfer(
+            address(singleSwap),
+            balanceTokenExcercise
+        );
+        //3 Now we need to swap our 1 WETH to DAI (aprox 1200)
+        singleSwap.swapExactInputSingle(
+            option.optionToken, //WETH address
+            tokenBorrow, //DAI address
+            option.amount,
+            address(this) // DAI Will be transfer HERE
+        );
+
+        uint tokensReceive = IERC20(tokenBorrow).balanceOf(address(this)); // Our Balance
+        
+        console.log(
+            "We SWAP WETH TO DAI and have this quantity ",
+            (tokensReceive / INETH)
+        );
+
+        //We finally PAY our flashLoan
+        console.log("We Repay our FlashLoan", amountToRepay / INETH  );
+        IERC20(tokenBorrow).transfer(pair, amountToRepay);
+        console.log(
+            "We have this profit in DAI",
+            IERC20(tokenBorrow).balanceOf(address(this) ) / INETH
+        );
     }
 
     /**

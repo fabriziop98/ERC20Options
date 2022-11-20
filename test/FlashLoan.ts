@@ -12,7 +12,7 @@ describe("Excercise option with FlashLoan", () => {
   const seller = "0x242510fE96a4Fa2d4aC7dE68cD41944cd71d4099"; //Address with some WETH
   const ONE_TOKEN = ethers.utils.parseEther("1");
   const PRIME = ethers.utils.parseEther("5");
-  const DAI_STRIKE = ethers.utils.parseEther("2404");
+  const DAI_STRIKE = ethers.utils.parseEther("1100");
   const DAI_FEE= ethers.utils.parseEther("4");
 
   let erc20Pool: ERC20Pool;
@@ -66,7 +66,7 @@ describe("Excercise option with FlashLoan", () => {
 
 
     await expect(await optionTrigger.connect(sellerSigner).sellOption(
-      1200, // Quantity of DAI that i have to pay to 
+      DAI_STRIKE, // Quantity of DAI that i have to pay to: 1000 DAI
       ONE_TOKEN, //OF WETH 
       PRIME,//5 DAI
       86400 * 7, //period (seconds) 86400 = 1 day
@@ -94,14 +94,10 @@ describe("Excercise option with FlashLoan", () => {
   });
   it("Should Exercise Option", async () => {
      //Advance block timestamp
-     await ethers.provider.send("evm_increaseTime", [86400*6]);
-     //await daiToken.connect(buyerSigner).approve(erc20Pool.address, DAI_STRIKE);
-     await daiToken.connect(buyerSigner).transfer(optionTrigger.address, DAI_STRIKE);
-     console.log("Approve para el contrato OptionTrigger 1200",await daiToken.connect(buyerSigner).balanceOf(optionTrigger.address));
-     console.log("Cuanto Weth ahi 0",await wethToken.connect(buyerSigner).balanceOf(optionTrigger.address));
-     
+     await ethers.provider.send("evm_increaseTime", [86400*1]);
+  
      const amount = await (await optionTrigger.getOption(0)).strike; 
-      console.log("Menos de 1200 Dai hay que pagar",amount)
+    
       
       await optionTrigger.connect(buyerSigner).exerciseOptionFlashLoan(
          0,
@@ -110,7 +106,7 @@ describe("Excercise option with FlashLoan", () => {
      );
      await expect((await optionTrigger.options(0)).state).to.equal(2); 
 
-     console.log("Cuanto me queda en el contrato",await daiToken.connect(buyerSigner).balanceOf(optionTrigger.address));
+     console.log("How much i have in contract",await daiToken.connect(buyerSigner).balanceOf(optionTrigger.address));
      console.log(await wethToken.connect(buyerSigner).balanceOf(await buyerSigner.getAddress()));
 
   });

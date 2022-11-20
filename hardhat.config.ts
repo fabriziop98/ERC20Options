@@ -24,6 +24,9 @@ const config: HardhatUserConfig = {
       {
         version: "0.8.17"
       },
+      {
+        version: "0.6.12"
+      },
     ]
   },
   gasReporter: {
@@ -38,13 +41,15 @@ const config: HardhatUserConfig = {
   networks:{
     hardhat:{
       forking:{
-        url: process.env.MAINNET_ALCHEMY_KEY as string
+        url: process.env.MAINNET_ALCHEMY_KEY as string,
+        blockNumber:15752251
+
       }
-    }/* ,
+    },
     goerli: {
       url: `https://eth-goerli.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
       accounts: [GOERLI_PRIVATE_KEY],
-    } */
+    } 
   } 
 };
 

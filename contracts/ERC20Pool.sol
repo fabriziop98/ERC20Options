@@ -157,33 +157,6 @@ contract ERC20Pool is Ownable {
       
     }
 
-    function exerciseErc20WithFlashLoan(
-        address _buyer,
-        address _seller,
-        address _paymentToken,
-        uint256 _paymentAmount,
-        address _optionToken,
-        uint256 _optionTokenAmount
-    ) external onlyOptionContract(msg.sender) {
-
-        //TODO: _optionTokenAmount can be less than option amount ? 
-
-        //transfer from buyer to seller
-        transferErc20(_buyer,_paymentToken,_seller,_paymentAmount);
-        //unlock tokens from pool
-        unlock(_optionTokenAmount, _optionToken);
-        //transfer pool to buyer
-
-        console.log("Pool Balance", IERC20(_optionToken).balanceOf(address(this)));
-        bool success = IERC20(_optionToken).approve(
-            _buyer,
-            _optionTokenAmount
-        );
-        require(success, "Transfer failed");
-        //emit TransferedAmount(_erc20Address, _amount);
-      
-    }
-
     function unlockAndSendErc20(address _erc20, address _beneficiary, uint256 _amount)
         external
         onlyOptionContract(msg.sender)
