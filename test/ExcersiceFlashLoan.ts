@@ -11,7 +11,7 @@ describe("Excercise option with FlashLoan", () => {
   const buyer = "0xF977814e90dA44bFA03b6295A0616a897441aceC"; //Address with some DAI
   const seller = "0x242510fE96a4Fa2d4aC7dE68cD41944cd71d4099"; //Address with some WETH
   const ONE_TOKEN = ethers.utils.parseEther("1");
-  const PRIME = ethers.utils.parseEther("5");
+  const PRIME = ethers.utils.parseEther("50");
   const DAI_STRIKE = ethers.utils.parseEther("1100");
   const DAI_FEE= ethers.utils.parseEther("4");
 
@@ -66,9 +66,9 @@ describe("Excercise option with FlashLoan", () => {
 
 
     await expect(await optionTrigger.connect(sellerSigner).sellOption(
-      DAI_STRIKE, // Quantity of DAI that i have to pay to: 1000 DAI
+      DAI_STRIKE, // Quantity of DAI that i have to pay to: 1100 DAI
       ONE_TOKEN, //OF WETH 
-      PRIME,//5 DAI
+      PRIME,//50 DAI
       86400 * 7, //period (seconds) 86400 = 1 day
       daiToken.address, //payment token (to buy and excersice the option)
       wethToken.address, //option token
@@ -94,7 +94,7 @@ describe("Excercise option with FlashLoan", () => {
   });
   it("Should Exercise Option", async () => {
      //Advance block timestamp
-     await ethers.provider.send("evm_increaseTime", [86400*1]);
+     await ethers.provider.send("evm_increaseTime", [86400*6]);
   
      const amount = await (await optionTrigger.getOption(0)).strike; 
     
@@ -107,7 +107,7 @@ describe("Excercise option with FlashLoan", () => {
      await expect((await optionTrigger.options(0)).state).to.equal(2); 
 
      console.log("How much i have in contract",await daiToken.connect(buyerSigner).balanceOf(optionTrigger.address));
-     console.log(await wethToken.connect(buyerSigner).balanceOf(await buyerSigner.getAddress()));
+     console.log("Profit Buyer",await daiToken.connect(buyerSigner).balanceOf(await buyerSigner.getAddress()));
 
   });
 

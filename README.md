@@ -12,6 +12,21 @@ npx hardhat node
 npx hardhat run scripts/deploy.ts
 ``` ps aux | grep hardhat kill -9 pid ```
 
+# Incluir
+
+Deben incluir README con:
+Breve introducción del proyecto.
+Cuál es el objetivo o qué problema busca resolver.
+Instrucciones precisas para su testing, deploy y uso.
+
+
+
+
+
+
+
+
+
 #Up the node of the fork mainnet 
 npx hardhat node 
 #Test with the fork mainet

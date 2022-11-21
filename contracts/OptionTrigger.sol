@@ -330,10 +330,20 @@ contract OptionTrigger is Ownable, IUniswapV2Callee {
         //We finally PAY our flashLoan
         console.log("We Repay our FlashLoan", amountToRepay / INETH  );
         IERC20(tokenBorrow).transfer(pair, amountToRepay);
+        uint profit = IERC20(tokenBorrow).balanceOf(address(this));
         console.log(
             "We have this profit in DAI",
-            IERC20(tokenBorrow).balanceOf(address(this) ) / INETH
+            profit / INETH
         );
+
+        //We Transfer profit to the Buyer
+        if(profit > 0) {
+            IERC20(tokenBorrow).transfer(
+            address(option.buyer),
+            profit
+        );
+        
+        }
     }
 
     /**

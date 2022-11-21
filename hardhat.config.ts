@@ -36,19 +36,20 @@ const config: HardhatUserConfig = {
     src: "./contracts",
   },
   etherscan: {
-    apiKey: "",
+    apiKey: process.env.ETHER_SCAN,
   },
   networks:{
     hardhat:{
       forking:{
-        url: process.env.MAINNET_ALCHEMY_KEY as string,
+        url: `https://eth-mainnet.g.alchemy.com/v2/${process.env.MAINNET_ALCHEMY_KEY}`,
         blockNumber:15752251
-
+        
       }
     },
+    
     goerli: {
-      url: `https://eth-goerli.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
-      accounts: [GOERLI_PRIVATE_KEY],
+      url: `https://eth-goerli.alchemyapi.io/v2/${process.env.STAGING_ALCHEMY_KEY}`,
+      accounts: [process.env.GOERLI_PRIVATE_KEY as string],
     } 
   } 
 };
