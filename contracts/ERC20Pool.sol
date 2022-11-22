@@ -146,8 +146,6 @@ contract ERC20Pool is Ownable {
         uint256 _optionTokenAmount
     ) external onlyOptionContract(msg.sender) {
 
-        //TODO: _optionTokenAmount can be less than option amount ? 
-
         //transfer from buyer to seller
         transferErc20(_buyer,_paymentToken,_seller,_paymentAmount);
         //unlock tokens from pool
