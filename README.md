@@ -2,6 +2,12 @@
 Github:
 https://github.com/fabriziop98/ERC20Options
 
+EtherScan:
+ERC20Pool:
+https://goerli.etherscan.io/address/0x6D5993F08bf89ea3F3Fb5c30635e87583d6211Ad#code
+OptionContract:
+https://goerli.etherscan.io/address/0xf3a705d4128352aD5174712F41Fb221f0c510524#code
+
 OptionTrigger is a blockchain protocol that connects two Peers: a buyer and a seller in the interaction and operation of Options contracts for any compatible ERC20 token.
 
 The protocol uses an American based Option that allows holders to exercise their rights
@@ -74,8 +80,8 @@ npx hardhat run --network goerli scripts/deploy-ERC20Pool.ts
 npx hardhat run --network goerli scripts/deploy-OptionTrigger.ts
 
 For verifying:
-npx hardhat verify --network goerli <contract address> --contract contracts/ERC20Pool.ts:ERC20Pool
-npx hardhat verify --network goerli <contract address> --contract contracts/OptionTrigger.ts:OptionTrigger
+npx hardhat verify --network goerli <contract address> --contract contracts/ERC20Pool.sol:ERC20Pool
+npx hardhat verify --network goerli <contract address> --contract contracts/OptionTrigger.sol:OptionTrigger <ERC20Pool contract addess>
 
 #Español
 #Datos Curiosos 

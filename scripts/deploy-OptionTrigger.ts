@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const erc20PoolAddr = '0x74Ba56ca80527C7291376c5796E8F3b810b9B56B';
+  const erc20PoolAddr = '0x6D5993F08bf89ea3F3Fb5c30635e87583d6211Ad';
   const OptionTrigger = await ethers.getContractFactory("OptionTrigger");
   const optionTrigger = await OptionTrigger.deploy(erc20PoolAddr);
 
