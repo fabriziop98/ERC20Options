@@ -1,20 +1,23 @@
 import { ethers, network } from "hardhat";
 import { Signer, Wallet, BigNumber } from "ethers";
 import { expect } from "chai";
-import { ERC20Pool, OptionTrigger, UniswapSwap } from "../typechain-types";
-import { IERC20 } from "../typechain-types/interfaces";
+//import { SingleSwap } from "../typechain-types/contracts/UniSwapSwapV3.sol";
+import { IERC20 } from "../typechain-types/@openzeppelin/contracts/token/ERC20";
+import { SingleSwap } from "../typechain-types/contracts/UniswapSwapV3.sol";
 
-describe("Excercise option with FlashLoan", () => {
+
+
+describe("Swap WETH/DAI with Uniswap", () => {
 
   const DAI = "0x6B175474E89094C44Da98b954EedeAC495271d0F"; //Address DAI MAINNET
   const WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";//Address WETH MAINNET
   const buyer = "0xF977814e90dA44bFA03b6295A0616a897441aceC"; //Address with some DAI
   const seller = "0x242510fE96a4Fa2d4aC7dE68cD41944cd71d4099"; //Address with some WETH
   const ONE_TOKEN = ethers.utils.parseEther("1");
-  const swapDAI = ethers.utils.parseEther("1216.252390052043062344");
+  const swapDAI = ethers.utils.parseEther("1215.935834500324316545");
 
 
-  let uniswapSwap: UniswapSwap;
+  let uniswapSwap: SingleSwap;
   let sellerSigner: Signer;
   let buyerSigner: Signer;
   let owner: Signer;
@@ -24,7 +27,7 @@ describe("Excercise option with FlashLoan", () => {
   before(async () => { //Setup 
 
     [owner] = await ethers.getSigners();
-    const uniSwapFactory = await ethers.getContractFactory("UniswapSwap");
+    const uniSwapFactory = await ethers.getContractFactory("SingleSwap");
     uniswapSwap = await uniSwapFactory.deploy();
 
     await network.provider.request({
@@ -56,24 +59,19 @@ describe("Excercise option with FlashLoan", () => {
   });
 
   it("Should swap 1 WETH to 1216.25 DAI", async () => {
-    await wethToken.connect(sellerSigner).approve(uniswapSwap.address, ONE_TOKEN);
+    //await daiToken.connect(buyerSigner).transfer(flashLoanv2.address, DAI_FEE); // 4 DAIS
+    await wethToken.connect(sellerSigner).transfer(uniswapSwap.address, ONE_TOKEN);
     console.log("DAI before SWAP", await daiToken.balanceOf(uniswapSwap.address));
 
-    /*     address _tokenIn,
-    address _tokenOut,
-    uint _amountIn,
-    uint _amountOutMin,
-    address _to */
-
-    await (uniswapSwap.connect(sellerSigner).swap(
+    //address _tokenIN, address _tokenOut,uint256 _amountIn
+    await (uniswapSwap.connect(sellerSigner).swapExactInputSingle(
       wethToken.address,
       daiToken.address,
       ONE_TOKEN,
-      1,
       uniswapSwap.address
     ));
 
-    await expect( await daiToken.balanceOf(uniswapSwap.address)).to.be.equal(swapDAI); 
+   // await expect( await daiToken.balanceOf(uniswapSwap.address)).to.be.equal(swapDAI); 
 
 
     console.log("DAI after SWAP", await daiToken.balanceOf(uniswapSwap.address));

@@ -30,12 +30,12 @@ Instrucciones precisas para su testing, deploy y uso.
 #Up the node of the fork mainnet 
 npx hardhat node 
 #Test with the fork mainet
-npx hardhat test --network localhost test/FlashLoan.ts 
+npx hardhat test --network localhost test/ExcersiceFlashLoan.ts 
 #Connect to the console HardHat
 npx hardhat console --network localhost
 
 #Deploy and transfer usdc 
-npx hardhat run --network localhost scripts/getDai.ts 
+npx hardhat run --network localhost scripts/UniSwap-SwapV3.ts 
 
 #PoolAddressesProvider-Aave Goerli 
 0xc4dCB5126a3AfEd129BC3668Ea19285A9f56D15D

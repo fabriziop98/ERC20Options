@@ -1,5 +1,5 @@
 import { ethers, network } from "hardhat";
-import { Signer, Wallet, BigNumber } from "ethers";
+import { Signer} from "ethers";
 import { expect } from "chai";
 import { ERC20Pool, OptionTrigger } from "../typechain-types";
 import { IERC20 } from "../typechain-types/interfaces";
@@ -13,7 +13,7 @@ describe("Excercise option with FlashLoan", () => {
   const ONE_TOKEN = ethers.utils.parseEther("1");
   const PRIME = ethers.utils.parseEther("50");
   const DAI_STRIKE = ethers.utils.parseEther("1100");
-  const DAI_FEE= ethers.utils.parseEther("4");
+
 
   let erc20Pool: ERC20Pool;
   let optionTrigger: OptionTrigger;
@@ -106,8 +106,6 @@ describe("Excercise option with FlashLoan", () => {
      );
      await expect((await optionTrigger.options(0)).state).to.equal(2); 
 
-     console.log("How much i have in contract",await daiToken.connect(buyerSigner).balanceOf(optionTrigger.address));
-     console.log("Profit Buyer",await daiToken.connect(buyerSigner).balanceOf(await buyerSigner.getAddress()));
 
   });
 
