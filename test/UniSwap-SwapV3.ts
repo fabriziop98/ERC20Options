@@ -61,7 +61,6 @@ describe("Swap WETH/DAI with Uniswap", () => {
   it("Should swap 1 WETH to 1216.25 DAI", async () => {
     //await daiToken.connect(buyerSigner).transfer(flashLoanv2.address, DAI_FEE); // 4 DAIS
     await wethToken.connect(sellerSigner).transfer(uniswapSwap.address, ONE_TOKEN);
-    console.log("DAI before SWAP", await daiToken.balanceOf(uniswapSwap.address));
 
     //address _tokenIN, address _tokenOut,uint256 _amountIn
     await (uniswapSwap.connect(sellerSigner).swapExactInputSingle(
@@ -72,11 +71,6 @@ describe("Swap WETH/DAI with Uniswap", () => {
     ));
 
    // await expect( await daiToken.balanceOf(uniswapSwap.address)).to.be.equal(swapDAI); 
-
-
-    console.log("DAI after SWAP", await daiToken.balanceOf(uniswapSwap.address));
-
-
 
   });
 

@@ -110,8 +110,6 @@ contract OptionTrigger is Ownable, IUniswapV2Callee {
         optionID = options.length;
 
         uint256 fee = calculateFee(amount);
-        console.log("amount: ", amount);
-        console.log("fee: ", fee);
 
         //efective amount: amount - fee
         amount -= fee;

@@ -83,6 +83,9 @@ For verifying:
 npx hardhat verify --network goerli <contract address> --contract contracts/ERC20Pool.sol:ERC20Pool
 npx hardhat verify --network goerli <contract address> --contract contracts/OptionTrigger.sol:OptionTrigger <ERC20Pool contract addess>
 
+Aditional docs
+https://drive.google.com/drive/u/2/folders/1GsOYjR3z86Wtfk0WorzU1kkQO_hGSzUh
+
 #Español
 #Datos Curiosos 
 
