@@ -36,7 +36,7 @@ describe("OptionTrigger", function() {
             
             await otherErc20.connect(owner).approve(erc20Pool.address, 1000);
 
-            await expect(optionTrigger.connect(owner).sellOption(
+            expect(optionTrigger.connect(owner).sellOption(
                 200, //strike price: erc20 amount
                 100, //amount of tokens msg.sender offers
                 5,   //premium amount
@@ -49,12 +49,12 @@ describe("OptionTrigger", function() {
             );
             
             //Options length should be 1
-            await expect((await optionTrigger.getAllOptions()).length).to.equal(1);
+            expect((await optionTrigger.getAllOptions()).length).to.equal(1);
             //Option 0 seller should be owner
-            await expect((await optionTrigger.getOption(0)).seller).to.equal(owner.address);
+            expect((await optionTrigger.getOption(0)).seller).to.equal(owner.address);
             //seller option id should be 0
-            await expect(Number(await optionTrigger.getSellerOptions(owner.address))).to.equal(Number("0"));
-            await expect(await otherErc20.balanceOf(owner.address)).to.equal(1000000000000000000000n - 100n);
+            expect(Number(await optionTrigger.getSellerOptions(owner.address))).to.equal(Number("0"));
+            expect(await otherErc20.balanceOf(owner.address)).to.equal(1000000000000000000000n - 100n);
 
         });
 
@@ -77,13 +77,13 @@ describe("OptionTrigger", function() {
             );
             
             //Amount of otherErc20 should be 1
-            await expect(await erc20Pool.getFees(otherErc20.address)).to.equal(1);
+            expect(await erc20Pool.getFees(otherErc20.address)).to.equal(1);
         });
 
         it("Should revert with 'Strike is too small'", async function(){
             const {optionTrigger, owner, erc20, otherErc20} = await loadFixture(deployOptionTriggerFixture);
             
-            await expect(optionTrigger.connect(owner).sellOption(
+            expect(optionTrigger.connect(owner).sellOption(
                 0, //strike price: erc20 amount
                 100, //amount of tokens msg.sender offers
                 5,   //premium amount
@@ -98,7 +98,7 @@ describe("OptionTrigger", function() {
         it("Should revert with 'Amount is too small'", async function(){
             const {optionTrigger, owner, erc20, otherErc20} = await loadFixture(deployOptionTriggerFixture);
             
-            await expect(optionTrigger.connect(owner).sellOption(
+            expect(optionTrigger.connect(owner).sellOption(
                 200, //strike price: erc20 amount
                 0, //amount of tokens msg.sender offers
                 5,   //premium amount
@@ -113,7 +113,7 @@ describe("OptionTrigger", function() {
         it("Should revert with 'Period is too short'", async function(){
             const {optionTrigger, owner, erc20, otherErc20} = await loadFixture(deployOptionTriggerFixture);
             
-            await expect(optionTrigger.connect(owner).sellOption(
+            expect(optionTrigger.connect(owner).sellOption(
                 200, //strike price: erc20 amount
                 100, //amount of tokens msg.sender offers
                 5,   //premium amount
@@ -128,7 +128,7 @@ describe("OptionTrigger", function() {
         it("Should revert with 'Period is too long'", async function(){
             const {optionTrigger, owner, erc20, otherErc20} = await loadFixture(deployOptionTriggerFixture);
             
-            await expect(optionTrigger.connect(owner).sellOption(
+            expect(optionTrigger.connect(owner).sellOption(
                 200, //strike price: erc20 amount
                 100, //amount of tokens msg.sender offers
                 5,   //premium amount
@@ -173,14 +173,14 @@ describe("OptionTrigger", function() {
                 5
             ));
 
-            await expect((await optionTrigger.getOption(0)).buyer)
+            expect((await optionTrigger.getOption(0)).buyer)
                 .to.equal(otherAccount.address);
-            await expect((await optionTrigger.getOption(0)).state)
+            expect((await optionTrigger.getOption(0)).state)
                 .to.equal(1);
-            await expect(Number(await optionTrigger.getBuyerOptions(otherAccount.address)))
+            expect(Number(await optionTrigger.getBuyerOptions(otherAccount.address)))
                 .to.equal(Number("0"));
-            await expect(await erc20.balanceOf(owner.address)).to.equal(999999999999999999000n + 5n);
-            await expect(await erc20.balanceOf(otherAccount.address)).to.equal(1000 - 5);
+            expect(await erc20.balanceOf(owner.address)).to.equal(999999999999999999000n + 5n);
+            expect(await erc20.balanceOf(otherAccount.address)).to.equal(1000 - 5);
         });
 
         it("Should revert with 'Payment token not valid'", async function() {
@@ -207,7 +207,7 @@ describe("OptionTrigger", function() {
             //Other accounts approves erc20pool to transfer erc20 to option owner
             await erc20.connect(otherAccount).approve(erc20Pool.address, 1000);
 
-            await expect((optionTrigger.connect(otherAccount).buyOption(
+            expect((optionTrigger.connect(otherAccount).buyOption(
                 0,
                 otherErc20.address, //not valid payment token
                 5
@@ -239,7 +239,7 @@ describe("OptionTrigger", function() {
             //Other accounts approves erc20pool to transfer erc20 to option owner
             await erc20.connect(otherAccount).approve(erc20Pool.address, 1000);
 
-            await expect((optionTrigger.connect(otherAccount).buyOption(
+            expect((optionTrigger.connect(otherAccount).buyOption(
                 0,
                 erc20.address, //not valid payment token
                 4
@@ -271,7 +271,7 @@ describe("OptionTrigger", function() {
                 //Other accounts approves erc20pool to transfer erc20 to option owner
                 await erc20.connect(otherAccount).approve(erc20Pool.address, 1000);
         
-                await expect((optionTrigger.connect(otherAccount).buyOption(
+                expect((optionTrigger.connect(otherAccount).buyOption(
                     0,
                     erc20.address,
                     5
@@ -326,10 +326,10 @@ describe("OptionTrigger", function() {
                 effectiveAmount
             );
 
-            await expect((await optionTrigger.options(0)).state).to.equal(2);
-            await expect(await erc20.balanceOf(owner.address)).to.equal(999999999999999999005n + 200n);
-            await expect(await erc20.balanceOf(otherAccount.address)).to.equal(995 - 200);
-            await expect(await otherErc20.balanceOf(otherAccount.address)).to.equal(99);
+            expect((await optionTrigger.options(0)).state).to.equal(2);
+            expect(await erc20.balanceOf(owner.address)).to.equal(999999999999999999005n + 200n);
+            expect(await erc20.balanceOf(otherAccount.address)).to.equal(995 - 200);
+            expect(await otherErc20.balanceOf(otherAccount.address)).to.equal(99);
         });
 
         it("Should revert with 'You are not the buyer'", async function(){
@@ -363,7 +363,7 @@ describe("OptionTrigger", function() {
 
             // FINISHED CREATING AND BUYING OPTION
 
-            await expect(optionTrigger.connect(owner).exerciseOption(
+            expect(optionTrigger.connect(owner).exerciseOption(
                 0,
                 erc20.address,
                 100
@@ -404,7 +404,7 @@ describe("OptionTrigger", function() {
             //Advance block timestamp
             await ethers.provider.send("evm_increaseTime", [86400*7]);
 
-            await expect(optionTrigger.connect(otherAccount).exerciseOption(
+            expect(optionTrigger.connect(otherAccount).exerciseOption(
                 0,
                 erc20.address,
                 100
@@ -444,7 +444,7 @@ describe("OptionTrigger", function() {
                 // FINISHED CREATING AND BUYING OPTION
 
                 const effectiveAmount = 200;
-                await expect(optionTrigger.connect(otherAccount).exerciseOption(
+                expect(optionTrigger.connect(otherAccount).exerciseOption(
                     0,
                     erc20.address,
                     effectiveAmount
@@ -479,8 +479,8 @@ describe("OptionTrigger", function() {
 
 
                 // State 4 -> Canceled
-                await expect((await optionTrigger.getOption(0)).state).to.equal(4);
-                await expect(await otherErc20.balanceOf(owner.address)).to.equal(999999999999999999999n); 
+                expect((await optionTrigger.getOption(0)).state).to.equal(4);
+                expect(await otherErc20.balanceOf(owner.address)).to.equal(999999999999999999999n); 
         });
 
         it("Should revert with 'You are not the owner of the option'", async function () {
@@ -503,12 +503,12 @@ describe("OptionTrigger", function() {
                 );
     
                 // FINISHED CREATING OPTION
-                await expect(optionTrigger.connect(otherAccount).cancelOption(0)).to.be.revertedWith(
+                expect(optionTrigger.connect(otherAccount).cancelOption(0)).to.be.revertedWith(
                     "You are not the owner of the option"
                 );
 
                 // State 0 -> New
-                await expect((await optionTrigger.getOption(0)).state).to.equal(0); 
+                expect((await optionTrigger.getOption(0)).state).to.equal(0); 
         });
 
         it("Should revert with 'Cannot cancel the option'", async function () {
@@ -541,12 +541,12 @@ describe("OptionTrigger", function() {
                 ));
     
                 // FINISHED CREATING AND BUYING OPTION
-                await expect(optionTrigger.connect(owner).cancelOption(0)).to.be.revertedWith(
+                expect(optionTrigger.connect(owner).cancelOption(0)).to.be.revertedWith(
                     "Cannot cancel the option"
                 );
 
                 // State 1 -> New
-                await expect((await optionTrigger.getOption(0)).state).to.equal(1); 
+                expect((await optionTrigger.getOption(0)).state).to.equal(1); 
         });
     });
 

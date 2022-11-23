@@ -356,7 +356,7 @@ contract OptionTrigger is Ownable, IUniswapV2Callee {
             "You are not the owner of the option"
         );
         require(
-            _option.state == State.New || _option.state == State.Expired,
+            _option.state == State.New || _option.state == State.Expired || (_option.state == State.Locked && block.timestamp >= _option.expiration),
             "Cannot cancel the option"
         );
         _option.state = State.Canceled;

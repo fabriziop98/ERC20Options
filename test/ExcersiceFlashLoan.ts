@@ -65,7 +65,7 @@ describe("Excercise option with FlashLoan", () => {
     await wethToken.connect(sellerSigner).approve(erc20Pool.address, ONE_TOKEN);
 
 
-    await expect(await optionTrigger.connect(sellerSigner).sellOption(
+    expect(await optionTrigger.connect(sellerSigner).sellOption(
       DAI_STRIKE, // Quantity of DAI that i have to pay to: 1100 DAI
       ONE_TOKEN, //OF WETH 
       PRIME,//50 DAI
@@ -88,7 +88,7 @@ describe("Excercise option with FlashLoan", () => {
       daiToken.address,
       PRIME
     ));
-    await expect((await optionTrigger.getOption(0)).buyer)
+    expect((await optionTrigger.getOption(0)).buyer)
     .to.equal(await buyerSigner.getAddress());
 
   });
@@ -104,7 +104,7 @@ describe("Excercise option with FlashLoan", () => {
          daiToken.address,
          amount
      );
-     await expect((await optionTrigger.options(0)).state).to.equal(2); 
+     expect((await optionTrigger.options(0)).state).to.equal(2); 
 
 
   });

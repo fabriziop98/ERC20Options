@@ -23,13 +23,13 @@ describe("ERC20Pool", function() {
         it("Should set the optionTrigger contract", async function (){
             const {erc20Pool, owner} = await loadFixture(deployERC20PoolFixture);
             await erc20Pool.connect(owner).setOptionTrigger(owner.address);
-            await expect(await erc20Pool.getOptionTrigger()).to.equal(owner.address); 
+            expect(await erc20Pool.getOptionTrigger()).to.equal(owner.address); 
         });
 
         describe("Modifiers", async function (){
             it("Should not set the optionTrigger contract: not owner", async function (){
                 const {erc20Pool, otherAccount} = await loadFixture(deployERC20PoolFixture);
-                await expect(erc20Pool.connect(otherAccount).setOptionTrigger(otherAccount.address))
+                expect(erc20Pool.connect(otherAccount).setOptionTrigger(otherAccount.address))
                     .to.be.revertedWith(
                         "Ownable: caller is not the owner"
                     );
@@ -37,7 +37,7 @@ describe("ERC20Pool", function() {
     
             it("Should not set the optionTrigger contract: not valid address", async function (){
                 const {erc20Pool, owner} = await loadFixture(deployERC20PoolFixture);
-                await expect(erc20Pool.connect(owner).setOptionTrigger("0x0000000000000000000000000000000000000000"))
+                expect(erc20Pool.connect(owner).setOptionTrigger("0x0000000000000000000000000000000000000000"))
                     .to.be.revertedWith(
                         "Zero address"
                     );
@@ -54,7 +54,7 @@ describe("ERC20Pool", function() {
             
             await erc20Pool.connect(optionContract).receiveFee(otherAccount.address, erc20.address, 1);
 
-            await expect(await erc20Pool.getFees(erc20.address)).to.equal(1);
+            expect(await erc20Pool.getFees(erc20.address)).to.equal(1);
         });
 
         describe("Events", async function () {
@@ -64,7 +64,7 @@ describe("ERC20Pool", function() {
                 await erc20.connect(owner).transfer(otherAccount.address, 100);
                 await erc20.connect(otherAccount).approve(erc20Pool.address, 100);
                 
-                await expect(erc20Pool.connect(optionContract).receiveFee(otherAccount.address, erc20.address, 1))
+                expect(erc20Pool.connect(optionContract).receiveFee(otherAccount.address, erc20.address, 1))
                     .to.emit(erc20Pool, "FeeReceived").withArgs(
                         erc20.address, 1
                     );
@@ -81,7 +81,7 @@ describe("ERC20Pool", function() {
             await erc20.connect(owner).approve(erc20Pool.address, 10000);
             //Call as optionContract to transferLockedErc20
             await erc20Pool.connect(optionContract).transferLockedErc20(owner.address, erc20.address, 100);
-            await expect(await erc20Pool.lockedErc20Balance(erc20.address)).to.equal(100);
+            expect(await erc20Pool.lockedErc20Balance(erc20.address)).to.equal(100);
         });
 
         it("Should revert with not option contract", async function() {
@@ -91,7 +91,7 @@ describe("ERC20Pool", function() {
             //approve erc20pool from owner to trasnfer erc20 token
             await erc20.connect(owner).approve(erc20Pool.address, 10000);
             //Call as optionContract to transferLockedErc20
-            await expect(erc20Pool.connect(otherAccount).transferLockedErc20(owner.address, erc20.address, 100))
+            expect(erc20Pool.connect(otherAccount).transferLockedErc20(owner.address, erc20.address, 100))
                 .to.be.revertedWith("Caller is not valid");
         });
 
@@ -102,7 +102,7 @@ describe("ERC20Pool", function() {
             //approve erc20pool from owner to trasnfer erc20 token
             await erc20.connect(owner).approve(erc20Pool.address, 10000);
             //Call as optionContract to transferLockedErc20
-            await expect(erc20Pool.connect(optionContract).transferLockedErc20(owner.address, erc20.address, 0))
+            expect(erc20Pool.connect(optionContract).transferLockedErc20(owner.address, erc20.address, 0))
                 .to.be.revertedWith("Amount not valid");
         });
 
@@ -114,7 +114,7 @@ describe("ERC20Pool", function() {
                 //approve erc20pool from owner to trasnfer erc20 token
                 await erc20.connect(owner).approve(erc20Pool.address, 10000);
                 //Call as optionContract to transferLockedErc20
-                await expect(erc20Pool.connect(optionContract)
+                expect(erc20Pool.connect(optionContract)
                     .transferLockedErc20(owner.address, erc20.address, 100))
                         .to.emit(erc20Pool, "LockedAmount")
                         .withArgs(erc20.address, 100, 100);
@@ -141,7 +141,7 @@ describe("ERC20Pool", function() {
             //approve erc20pool from owner to trasnfer erc20 token
             await erc20.connect(owner).approve(erc20Pool.address, 10000);
             //Call as optionContract to transferLockedErc20
-            await expect(erc20Pool.connect(otherAccount).transferErc20(owner.address, erc20.address, otherAccount.address, 100))
+            expect(erc20Pool.connect(otherAccount).transferErc20(owner.address, erc20.address, otherAccount.address, 100))
                 .to.be.revertedWith("Caller is not valid");
         });
 
@@ -152,7 +152,7 @@ describe("ERC20Pool", function() {
             //approve erc20pool from owner to trasnfer erc20 token
             await erc20.connect(owner).approve(erc20Pool.address, 10000);
             //Call as optionContract to transferLockedErc20
-            await expect(erc20Pool.connect(optionContract).transferErc20(owner.address, "0x0000000000000000000000000000000000000000", otherAccount.address, 100))
+            expect(erc20Pool.connect(optionContract).transferErc20(owner.address, "0x0000000000000000000000000000000000000000", otherAccount.address, 100))
                 .to.be.revertedWith("Zero address");
         });
 
@@ -163,7 +163,7 @@ describe("ERC20Pool", function() {
             //approve erc20pool from owner to trasnfer erc20 token
             await erc20.connect(owner).approve(erc20Pool.address, 10000);
             //Call as optionContract to transferLockedErc20
-            await expect(erc20Pool.connect(optionContract).transferErc20(owner.address, erc20.address, otherAccount.address, 0))
+            expect(erc20Pool.connect(optionContract).transferErc20(owner.address, erc20.address, otherAccount.address, 0))
                 .to.be.revertedWith("Amount not valid");
         });
     });
@@ -188,8 +188,8 @@ describe("ERC20Pool", function() {
                 erc20.address,
                 100);
             
-            await expect(await erc20Pool.getUnLockedAmount(erc20.address)).to.equal(0);
-            await expect(await erc20Pool.getLockedAmount(erc20.address)).to.equal(0);
+            expect(await erc20Pool.getUnLockedAmount(erc20.address)).to.equal(0);
+            expect(await erc20Pool.getLockedAmount(erc20.address)).to.equal(0);
         });
 
         it("should revert with not enough locked tokens", async function(){
@@ -202,7 +202,7 @@ describe("ERC20Pool", function() {
             //Lock funds in pool
             await erc20Pool.connect(optionContract).transferLockedErc20(owner.address, erc20.address, 90);
             //Call as optionContract to exerciseErc20
-            await expect(erc20Pool.connect(optionContract).exerciseErc20(
+            expect(erc20Pool.connect(optionContract).exerciseErc20(
                 owner.address, 
                 otherAccount.address,
                 erc20.address, 
@@ -223,7 +223,7 @@ describe("ERC20Pool", function() {
                 //Lock funds in pool
                 await erc20Pool.connect(optionContract).transferLockedErc20(owner.address, erc20.address, 100);
                 //Call as optionContract to exerciseErc20
-                await expect(erc20Pool.connect(optionContract).exerciseErc20(
+                expect(erc20Pool.connect(optionContract).exerciseErc20(
                     owner.address, 
                     otherAccount.address,
                     erc20.address, 
@@ -244,7 +244,7 @@ describe("ERC20Pool", function() {
                 //Lock funds in pool
                 await erc20Pool.connect(optionContract).transferLockedErc20(owner.address, erc20.address, 100);
                 //Call as optionContract to exerciseErc20
-                await expect(erc20Pool.connect(optionContract).exerciseErc20(
+                expect(erc20Pool.connect(optionContract).exerciseErc20(
                     owner.address, 
                     otherAccount.address,
                     erc20.address, 
@@ -267,7 +267,7 @@ describe("ERC20Pool", function() {
             await erc20.connect(owner).approve(erc20Pool.address, 10000);
             //Call as optionContract to transferLockedErc20
             await erc20Pool.connect(optionContract).transferLockedErc20(owner.address, erc20.address, 100);
-            await expect(await erc20Pool.getLockedAmount(erc20.address)).to.equal(100);
+            expect(await erc20Pool.getLockedAmount(erc20.address)).to.equal(100);
             
         });
     });
@@ -282,7 +282,7 @@ describe("ERC20Pool", function() {
             await erc20.connect(owner).approve(erc20Pool.address, 10000);
             //Call as optionContract to transferLockedErc20
             await erc20Pool.connect(optionContract).transferLockedErc20(owner.address, erc20.address, 100);
-            await expect(await erc20Pool.getLockedAmount(erc20.address)).to.equal(100);
+            expect(await erc20Pool.getLockedAmount(erc20.address)).to.equal(100);
             
         });
     });
