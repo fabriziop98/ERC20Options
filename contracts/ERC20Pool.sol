@@ -192,7 +192,7 @@ contract ERC20Pool is Ownable {
     }
 
     function getLockedAmount(address _erc20Address)
-        external
+        public
         view
         validAddress(_erc20Address)
         returns (uint256)
@@ -202,7 +202,7 @@ contract ERC20Pool is Ownable {
 
 
     function getUnLockedAmount(address _erc20Address)
-        external
+        public
         view
         validAddress(_erc20Address)
         returns (uint256)

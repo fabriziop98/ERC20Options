@@ -53,6 +53,7 @@ describe("OptionTrigger", function() {
             //Option 0 seller should be owner
             expect((await optionTrigger.getOption(0)).seller).to.equal(owner.address);
             //seller option id should be 0
+            // When running test in localhost , this ID can be = 1
             expect(Number(await optionTrigger.getSellerOptions(owner.address))).to.equal(Number("0"));
             expect(await otherErc20.balanceOf(owner.address)).to.equal(1000000000000000000000n - 100n);
 
@@ -479,7 +480,7 @@ describe("OptionTrigger", function() {
 
 
                 // State 4 -> Canceled
-                expect((await optionTrigger.getOption(0)).state).to.equal(4);
+                expect((await optionTrigger.getOption(0)).state).to.equal(3);
                 expect(await otherErc20.balanceOf(owner.address)).to.equal(999999999999999999999n); 
         });
 

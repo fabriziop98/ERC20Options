@@ -15,8 +15,7 @@ contract OptionTrigger is Ownable, IUniswapV2Callee {
         New, /* 0 */
         Locked, /* 1 */
         Exercised, /* 2 */
-        Expired, /* 3 */
-        Canceled /* 4 */
+        Canceled /* 3 */
     }
     enum OptionType {
         Call,
@@ -173,7 +172,7 @@ contract OptionTrigger is Ownable, IUniswapV2Callee {
         uint256 optionID,
         address paymentToken,
         uint256 amount
-    ) public {
+    ) external {
         Option memory _option = options[optionID];
 
         require(_option.buyer == msg.sender, "You are not the buyer");
@@ -212,7 +211,7 @@ contract OptionTrigger is Ownable, IUniswapV2Callee {
         uint256 optionID,
         address paymentToken,
         uint256 amount
-    ) public {
+    ) external {
         Option memory _option = options[optionID];
 
         require(_option.buyer == msg.sender, "You are not the buyer");
@@ -356,7 +355,7 @@ contract OptionTrigger is Ownable, IUniswapV2Callee {
             "You are not the owner of the option"
         );
         require(
-            _option.state == State.New || _option.state == State.Expired || (_option.state == State.Locked && block.timestamp >= _option.expiration),
+            _option.state == State.New || (_option.state == State.Locked && block.timestamp >= _option.expiration),
             "Cannot cancel the option"
         );
         _option.state = State.Canceled;
